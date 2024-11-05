@@ -12,9 +12,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
         const pool = new Pool({
           connectionString: configService.getOrThrow<string>('DATABASE_URL'),
         });
-        return drizzle(pool, {
-          schema: {},
-        });
+        return drizzle(pool);
       },
       inject: [ConfigService],
     },
