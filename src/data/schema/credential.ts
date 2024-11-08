@@ -3,12 +3,13 @@ import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { users } from './user';
 
 export const credentials = pgTable('credentials', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: text('id').notNull().primaryKey(),
   userId: uuid('user_id')
     .notNull()
-    .references(() => users.id, { onDelete: 'cascade' }),
+    .references(() => users.id, { onDelete: 'cascade' })
+    .unique(),
   password: text('password').notNull(),
-  refreshToken: text('refresh_token'),
+  refreshToken: text('refresh_token').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at'),
 });
