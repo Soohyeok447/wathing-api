@@ -20,4 +20,6 @@ export const files = pgTable('files', {
 });
 
 export type File = InferSelectModel<typeof files>;
-export type NewFile = InferInsertModel<typeof files>;
+export type NewFile = InferInsertModel<typeof files> & {
+  size?: number;
+};
