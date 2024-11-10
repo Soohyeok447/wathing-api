@@ -78,8 +78,7 @@ export class AuthService {
     const userId = await this.db.transaction(async (tx) => {
       const newUser: NewUser = {
         name: name,
-        birthday: new Date(birthday),
-        profileImageId: profileImageId || null,
+        birthday: birthday,
       };
 
       const [result] = await tx
