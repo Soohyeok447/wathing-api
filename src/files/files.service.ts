@@ -1,7 +1,8 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
-  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as AWS from 'aws-sdk';
@@ -10,10 +11,12 @@ import { v4 } from 'uuid';
 import { files, NewFile } from '../data/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class FilesService {
   private s3: AWS.S3;
+  private cloudFrontUrl: string;
 
   constructor(
     private configService: ConfigService,
@@ -24,27 +27,43 @@ export class FilesService {
       secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
       region: this.configService.get<string>('AWS_REGION'),
     });
+    this.cloudFrontUrl = this.configService.get<string>('CLOUDFRONT_URL');
   }
 
   async uploadFile(file: Express.Multer.File, dir: string): Promise<string> {
-    const resizedBuffer = await resizeImage(file.buffer, 800);
+    if (!dir) {
+      throw new BadRequestException('dir는 필수 입력 사항입니다.');
+    }
+
+    if (dir !== 'profile' && dir !== 'story') {
+      throw new BadRequestException('dir는 profile 또는 story여야 합니다.');
+    }
+
+    const isImage = file.mimetype.startsWith('image/');
+    const isVideo = file.mimetype.startsWith('video/');
+
+    if (!isImage && !isVideo) {
+      throw new BadRequestException('지원하지 않는 파일 형식입니다.');
+    }
+
+    const fileBuffer = isImage
+      ? await resizeImage(file.buffer, 800)
+      : file.buffer;
 
     const fileName = `${dir}/${v4()}`;
 
     const params = {
       Bucket: this.configService.get<string>('AWS_S3_BUCKET_NAME'),
       Key: fileName,
-      Body: resizedBuffer,
+      Body: fileBuffer,
       ContentType: file.mimetype,
     };
 
     await this.s3.upload(params).promise();
 
     const newFile: NewFile = {
-      name: file.originalname,
       type: file.mimetype,
       size: file.size,
-      metadata: {},
       key: fileName,
     };
 
@@ -54,5 +73,38 @@ export class FilesService {
       .returning({ id: files.id });
 
     return result.id;
+  }
+
+  async readFile(id: string): Promise<string> {
+    const [file] = await this.db.select().from(files).where(eq(files.id, id));
+
+    if (!file) {
+      throw new NotFoundException('파일을 찾을 수 없습니다.');
+    }
+
+    const { key } = file;
+
+    const fileUrl = `${this.cloudFrontUrl}/${key}`;
+
+    return fileUrl;
+  }
+
+  async deleteFile(id: string): Promise<void> {
+    const [file] = await this.db.select().from(files).where(eq(files.id, id));
+
+    if (!file) {
+      throw new NotFoundException('파일을 찾을 수 없습니다.');
+    }
+
+    const { key } = file;
+
+    const params = {
+      Bucket: this.configService.get<string>('AWS_S3_BUCKET_NAME'),
+      Key: key,
+    };
+
+    await this.s3.deleteObject(params).promise();
+
+    await this.db.delete(files).where(eq(files.id, id));
   }
 }
