@@ -5,13 +5,12 @@ import { files } from '.';
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
-  birthday: timestamp('birthday', { mode: 'date' }).notNull(),
-  statusMessage: text('status_message').default('').notNull(),
+  birthday: text('birthday').notNull(),
+  statusMessage: text('status_message'),
   profileImageId: uuid('profile_image_id').references(() => files.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at'),
 });
 
 export type User = InferSelectModel<typeof users>;
-export type NewUser = InferInsertModel<typeof users> & {
-  profileImageId?: string;
-};
+export type NewUser = InferInsertModel<typeof users>;
