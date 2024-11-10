@@ -25,4 +25,12 @@ export class FilesController {
       id: await this.filesService.uploadFile(file, dir),
     };
   }
+
+  @Post('read')
+  @UseGuards(JwtAuthGuard)
+  async readFile(@Body('id') id): Promise<{ cdn: string }> {
+    const url = await this.filesService.readFile(id);
+
+    return { cdn: url };
+  }
 }
