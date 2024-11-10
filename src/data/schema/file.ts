@@ -4,12 +4,10 @@ import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 export const files = pgTable('files', {
   id: uuid('id').defaultRandom().primaryKey(),
   type: text('type').notNull(),
-  size: integer('size').default(0).notNull(),
+  size: integer('size').notNull(),
   key: text('key').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 export type File = InferSelectModel<typeof files>;
-export type NewFile = InferInsertModel<typeof files> & {
-  size?: number;
-};
+export type NewFile = InferInsertModel<typeof files>;
