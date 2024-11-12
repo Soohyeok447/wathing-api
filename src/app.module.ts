@@ -5,16 +5,20 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TerminusModule } from '@nestjs/terminus';
 import { HealthController } from './health.controller';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      envFilePath:
+        process.env.NODE_ENV === 'development' ? `.env.development` : undefined,
+      ignoreEnvFile: process.env.NODE_ENV !== 'development',
     }),
     DatabaseModule,
     AuthModule,
     UsersModule,
+    HttpModule,
     TerminusModule,
   ],
   controllers: [HealthController],

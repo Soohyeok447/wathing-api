@@ -17,31 +17,6 @@ jobs:
           node-version: 18.x
           cache: 'npm'
 
-      - name: Generate .env.development
-        run: |
-          touch .env.development
-
-          echo HOST=${{ secrets.DEV_SERVER_URL }} >> .env.development
-          echo PORT=${{ secrets.DEV_PORT }} >> .env.development
-          echo DEBUG=true >> .env.development
-
-          echo DATABASE_URL=${{ secrets.DEV_DATABASE_URL }} >> .env.development
-
-          echo JWT_SECRET=${{ secrets.DEV_JWT_SECRET }} >> .env.development
-          echo JWT_EXPIRES_IN=${{ secrets.DEV_JWT_EXPIRES_IN }} >> .env.development
-
-          echo JWT_REFRESH_SECRET=${{ secrets.DEV_JWT_REFRESH_SECRET }} >> .env.development
-          echo JWT_REFRESH_EXPIRES_IN=${{ secrets.DEV_JWT_REFRESH_EXPIRES_IN }} >> .env.development
-
-          echo AWS_ACCESS_KEY=${{ secrets.AWS_ACCESS_KEY }} >> .env.development
-          echo AWS_SECRET_KEY=${{ secrets.AWS_SECRET_KEY }} >> .env.development
-          echo AWS_REGION=${{ secrets.AWS_REGION }} >> .env.development
-
-          echo S3_BUCKET_NAME=${{ secrets.DEV_S3_BUCKET_NAME }} >> .env.development
-          echo CDN_DOMAIN=${{ secrets.DEV_CDN_DOMAIN }} >> .env.development
-
-          echo SALT_ROUNDS=${{ secrets.DEV_SALT_ROUNDS }} >> .env.development
-
       - name: Install Dependencies
         run: npm ci
 
@@ -54,15 +29,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Configure AWS Credentials
-        run: |
-          mkdir -p ~/.aws
-          echo "[default]" > ~/.aws/credentials
-          echo "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY }}" >> ~/.aws/credentials
-          echo "aws_secret_access_key=${{ secrets.AWS_SECRET_KEY }}" >> ~/.aws/credentials
-          echo "[default]" > ~/.aws/config
-          echo "region=${{ secrets.AWS_REGION }}" >> ~/.aws/config
-
       # Dockerizing
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -74,6 +40,6 @@ jobs:
         run: |
           IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/wathing-api-dev
           IMAGE_TAG=${IMAGE_NAME}:${{ github.sha }}
-          docker build -f .dev.Dockerfile -t $IMAGE_TAG -t ${IMAGE_NAME}:latest .
+          docker build -f Dockerfile -t $IMAGE_TAG -t ${IMAGE_NAME}:latest .
           docker push $IMAGE_TAG
           docker push ${IMAGE_NAME}:latest

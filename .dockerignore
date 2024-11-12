@@ -6,6 +6,9 @@ test
 credentials
 .aws
 
+.env.*
+.env
+
 *.log
 
 *.md

@@ -12,9 +12,8 @@ RUN npm i drizzle-kit
 RUN npx drizzle-kit generate
 
 ENV PORT=3000
-ENV NODE_ENV=development
 ENV TZ=Asia/Seoul
 
 EXPOSE 3000
 
-RUN npx drizzle-kit migrate && npm run start
+CMD npx drizzle-kit migrate && npm run start
