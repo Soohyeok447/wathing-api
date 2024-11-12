@@ -41,7 +41,6 @@ jobs:
           sudo docker run -d \
           -p 3000:3000 \
           --name wathing-api-dev \
-          --env-file .env.development \
           ${{ secrets.DOCKER_USERNAME }}/wathing-api-dev:latest
 
       - name: Delete Dangling Images
