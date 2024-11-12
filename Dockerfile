@@ -20,4 +20,4 @@ ENV TZ=Asia/Seoul
 
 EXPOSE 3000
 
-CMD npx drizzle-kit migrate && node dist/main
+CMD ["sh", "-c", "npx drizzle-kit migrate && node dist/main"]
