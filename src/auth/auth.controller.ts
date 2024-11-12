@@ -10,12 +10,16 @@ import {
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt.guard';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
+  @ApiOperation({ summary: '유저 회원가입' })
+  @ApiResponse({ status: 201, description: 'Signup successful' })
   async signUp(@Body() body) {
     const { id, password, name, birthday, profileImageId } = body;
 
@@ -31,6 +35,7 @@ export class AuthController {
   }
 
   @Post('signin')
+  @ApiOperation({ summary: '유저 로그인' })
   async signin(@Body() body) {
     const { id, password } = body;
 
@@ -38,6 +43,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @ApiOperation({ summary: 'JWT 재발급' })
   async refreshToken(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
 
@@ -58,11 +64,5 @@ export class AuthController {
         throw new BadRequestException('토큰 갱신 중 오류가 발생했습니다.');
       }
     }
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('protected')
-  getProtectedResource(@Req() req) {
-    return { userId: req.user.userId };
   }
 }
