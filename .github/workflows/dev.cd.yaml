@@ -40,6 +40,7 @@ jobs:
         run: |
           sudo docker run -d \
           -p 3000:3000 \
+          --network wathing-net \
           --name wathing-api-dev \
           ${{ secrets.DOCKER_USERNAME }}/wathing-api-dev:latest
 

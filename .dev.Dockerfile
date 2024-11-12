@@ -17,4 +17,4 @@ ENV TZ=Asia/Seoul
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+RUN npx drizzle-kit migrate && npm run start
