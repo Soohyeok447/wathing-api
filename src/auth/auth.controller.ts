@@ -4,13 +4,10 @@ import {
   Req,
   UseGuards,
   Body,
-  UploadedFile,
-  UseInterceptors,
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { FilesService } from '../files/files.service';
 import { JwtAuthGuard } from './jwt.guard';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
 

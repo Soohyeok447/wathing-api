@@ -16,18 +16,20 @@ import { eq } from 'drizzle-orm';
 @Injectable()
 export class FilesService {
   private s3: AWS.S3;
-  private cloudFrontUrl: string;
+  private cdn: string;
+  private s3Bucket: string;
 
   constructor(
     private configService: ConfigService,
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
   ) {
     this.s3 = new AWS.S3({
-      accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID'),
-      secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY'),
+      accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY'),
+      secretAccessKey: this.configService.get<string>('AWS_SECRET_KEY'),
       region: this.configService.get<string>('AWS_REGION'),
     });
-    this.cloudFrontUrl = this.configService.get<string>('CLOUDFRONT_URL');
+    this.cdn = this.configService.get<string>('CDN_DOMAIN');
+    this.s3Bucket = this.configService.get<string>('S3_BUCKET_NAME');
   }
 
   async uploadFile(file: Express.Multer.File, dir: string): Promise<string> {
@@ -53,7 +55,7 @@ export class FilesService {
     const fileName = `${dir}/${v4()}`;
 
     const params = {
-      Bucket: this.configService.get<string>('AWS_S3_BUCKET_NAME'),
+      Bucket: this.s3Bucket,
       Key: fileName,
       Body: fileBuffer,
       ContentType: file.mimetype,
@@ -84,7 +86,7 @@ export class FilesService {
 
     const { key } = file;
 
-    const fileUrl = `${this.cloudFrontUrl}/${key}`;
+    const fileUrl = `${this.cdn}/${key}`;
 
     return fileUrl;
   }
@@ -99,7 +101,7 @@ export class FilesService {
     const { key } = file;
 
     const params = {
-      Bucket: this.configService.get<string>('AWS_S3_BUCKET_NAME'),
+      Bucket: this.s3Bucket,
       Key: key,
     };
 

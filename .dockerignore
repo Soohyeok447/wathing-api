@@ -1,0 +1,17 @@
+node_modules
+.git
+.github
+test
+
+.env
+.env.*
+
+credentials
+.aws
+
+*.log
+
+*.md
+*.txt
+.*.Dockerfile
+Dockerfile
