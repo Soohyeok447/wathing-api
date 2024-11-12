@@ -26,6 +26,7 @@
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^9.0.0",
+    "@nestjs/terminus": "^10.2.3",
     "aws-sdk": "^2.1691.0",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
