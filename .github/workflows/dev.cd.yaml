@@ -20,25 +20,25 @@ jobs:
         run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Pull Docker Image
-        run: docker pull ${{ secrets.DOCKER_USERNAME }}/wathing-api-dev:latest
+        run: sudo docker pull ${{ secrets.DOCKER_USERNAME }}/wathing-api-dev:latest
 
       - name: Stop Previous Container
         run: |
-          if [ "$(docker ps -q -f name=wathing-api-dev)" ]; then
-            docker stop wathing-api-dev
+          if [ "$(sudo docker ps -q -f name=wathing-api-dev)" ]; then
+            sudo docker stop wathing-api-dev
           fi
         continue-on-error: true
 
       - name: Remove Previous Container
         run: |
-          if [ "$(docker ps -q -a -f name=wathing-api-dev)" ]; then
-            docker rm wathing-api-dev
+          if [ "$(sudo docker ps -q -a -f name=wathing-api-dev)" ]; then
+            sudo docker rm wathing-api-dev
           fi
         continue-on-error: true
 
       - name: Run Docker Container
         run: |
-          docker run -d \
+          sudo docker run -d \
             -p 3000:3000 \
             --network wathing-net \
             --name wathing-api-dev \
@@ -60,10 +60,10 @@ jobs:
 
       - name: Delete Dangling Images
         run: |
-          dangling_images=$(docker images -q -f "dangling=true")
+          dangling_images=$(sudo docker images -q -f "dangling=true")
 
           if [ -n "$dangling_images" ]; then
-            docker rmi $dangling_images
+            sudo docker rmi $dangling_images
           else
             echo "붕뜬 상태의 이미지가 없습니다."
           fi
