@@ -54,7 +54,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Configure AWS CLI
+      - name: Configure AWS Credentials
         run: |
           mkdir -p ~/.aws
           echo "[default]" > ~/.aws/credentials
