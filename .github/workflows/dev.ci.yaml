@@ -46,7 +46,7 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint:src
+        run: npm run lint
 
       # - name: Test
       #   run: npm run test
