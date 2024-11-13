@@ -16,7 +16,6 @@ import { eq } from 'drizzle-orm';
 @Injectable()
 export class FilesService {
   private s3: AWS.S3;
-  private cdn: string;
   private s3Bucket: string;
 
   constructor(
@@ -28,11 +27,14 @@ export class FilesService {
       secretAccessKey: this.configService.get<string>('AWS_SECRET_KEY'),
       region: this.configService.get<string>('AWS_REGION'),
     });
-    this.cdn = this.configService.get<string>('CDN_DOMAIN');
     this.s3Bucket = this.configService.get<string>('S3_BUCKET_NAME');
   }
 
   async uploadFile(file: Express.Multer.File, dir: string): Promise<string> {
+    if (!file) {
+      throw new BadRequestException('파일이 제공되지 않았습니다.');
+    }
+
     if (!dir) {
       throw new BadRequestException('dir는 필수 입력 사항입니다.');
     }
@@ -77,18 +79,14 @@ export class FilesService {
     return result.id;
   }
 
-  async readFile(id: string): Promise<string> {
+  async readFile(id: string): Promise<schema.File> {
     const [file] = await this.db.select().from(files).where(eq(files.id, id));
 
     if (!file) {
       throw new NotFoundException('파일을 찾을 수 없습니다.');
     }
 
-    const { key } = file;
-
-    const fileUrl = `${this.cdn}/${key}`;
-
-    return fileUrl;
+    return file;
   }
 
   async deleteFile(id: string): Promise<void> {
