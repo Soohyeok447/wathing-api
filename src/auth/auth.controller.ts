@@ -11,10 +11,13 @@ import {
 import { AuthService } from './auth.service';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
 import {
+  ApiBadRequestResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { SignUpDto } from './dtos/signup.dto';
 import { SignInDto } from './dtos/signin.dto';
@@ -41,17 +44,14 @@ export class AuthController {
   @ApiResponse({
     status: 400,
     description: '입력 데이터가 잘못됨',
-    type: BadRequestException,
   })
   @ApiResponse({
     status: 404,
     description: '프로필 이미지 Id가 잘못됨',
-    type: NotFoundException,
   })
   @ApiResponse({
     status: 409,
     description: '이미 가입된 사용자',
-    type: ConflictException,
   })
   async signUp(@Body() body: SignUpDto) {
     const { id, password, name, birthday, profileImageId } = body;
@@ -72,20 +72,15 @@ export class AuthController {
     summary: '유저 로그인',
     description: '유저가 로그인을 통해 액세스 및 리프레시 토큰을 발급받습니다.',
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: '성공적으로 로그인 완료',
     type: AuthResponseDto,
   })
-  @ApiResponse({
-    status: 400,
+  @ApiBadRequestResponse({
     description: 'ID 또는 비밀번호가 잘못됨',
-    type: BadRequestException,
   })
-  @ApiResponse({
-    status: 401,
+  @ApiUnauthorizedResponse({
     description: '아이디 또는 비밀번호가 올바르지 않음',
-    type: UnauthorizedException,
   })
   async signin(@Body() body: SignInDto): Promise<AuthResponseDto> {
     const { id, password } = body;
@@ -106,12 +101,10 @@ export class AuthController {
   @ApiResponse({
     status: 401,
     description: '유효하지 않거나 만료된 리프레시 토큰',
-    type: UnauthorizedException,
   })
   @ApiResponse({
     status: 400,
     description: '리프레시 토큰 갱신 오류',
-    type: BadRequestException,
   })
   async refreshToken(@Req() req: Request) {
     const authHeader = req.headers['authorization'];

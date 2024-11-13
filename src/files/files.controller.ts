@@ -10,9 +10,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiCreatedResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -54,13 +56,11 @@ export class FilesController {
       },
     },
   })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: '파일 업로드 성공',
     example: { id: uuidExample },
   })
-  @ApiResponse({
-    status: 400,
+  @ApiBadRequestResponse({
     description:
       '유효하지 않은 디렉토리명, 파일이 제공되지 않음, 유효하지 않은 파일',
   })
