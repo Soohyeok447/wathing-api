@@ -7,7 +7,9 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 100 }).notNull(),
   birthday: text('birthday').notNull(),
   statusMessage: text('status_message'),
-  profileImageId: uuid('profile_image_id').references(() => files.id),
+  profileImageId: uuid('profile_image_id').references(() => files.id, {
+    onDelete: 'set null',
+  }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at'),
 });

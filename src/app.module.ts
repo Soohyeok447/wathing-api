@@ -6,6 +6,9 @@ import { UsersModule } from './users/users.module';
 import { TerminusModule } from '@nestjs/terminus';
 import { HealthController } from './health.controller';
 import { HttpModule } from '@nestjs/axios';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -16,6 +19,21 @@ import { HttpModule } from '@nestjs/axios';
       ignoreEnvFile: process.env.NODE_ENV !== 'development',
     }),
     DatabaseModule,
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      // formatError: (error) => {
+      //   const graphQLFormattedError = {
+      //     message: error.message,
+      //     statusCode: error.extensions?.originalError['statusCode'],
+      //     error: error.extensions?.originalError['error'],
+      //     path: error.path,
+      //   };
+      //   return graphQLFormattedError;
+      // },
+      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+      driver: ApolloDriver,
+      debug: true,
+      playground: true,
+    }),
     AuthModule,
     UsersModule,
     HttpModule,

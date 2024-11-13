@@ -1,0 +1,61 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type UserResponseDto {
+  """유저 ID"""
+  id: ID!
+
+  """유저 이름"""
+  name: String!
+
+  """생년월일"""
+  birthday: String!
+
+  """상태 메시지"""
+  statusMessage: String
+
+  """프로필 이미지 ID"""
+  profileImageId: String
+
+  """생성된 날짜"""
+  createdAt: DateTime!
+
+  """마지막 업데이트 날짜"""
+  updatedAt: DateTime
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  """유저 찾기"""
+  user(id: String!): UserResponseDto!
+}
+
+type Mutation {
+  """유저 수정"""
+  updateUser(update: UpdateUserDto!): UserResponseDto!
+
+  """유저 삭제"""
+  deleteUser(id: ID!): Boolean!
+}
+
+input UpdateUserDto {
+  """유저의 고유 ID"""
+  id: ID!
+
+  """유저 이름 (최소 2자, 최대 12자)"""
+  name: String
+
+  """생년월일 (yyyy-mm-dd 형식)"""
+  birthday: String
+
+  """상태 메시지 (최대 30자)"""
+  statusMessage: String
+
+  """프로필 이미지 ID"""
+  profileImageId: String
+}

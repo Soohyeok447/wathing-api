@@ -1,14 +1,21 @@
-import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User, users } from '../data/schema';
 import * as schema from '../data/schema';
 import { eq } from 'drizzle-orm';
 import { isDateString, isEmptyString } from '../utils/type_gurad';
 import { UpdateUserDto } from './dtos/update_user.dto';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class UsersService {
   constructor(
+    private readonly filesService: FilesService,
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
@@ -54,5 +61,19 @@ export class UsersService {
       .returning();
 
     return user;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    const [user] = await this.db.select().from(users).where(eq(users.id, id));
+
+    if (!user) {
+      throw new NotFoundException('유저를 찾을 수 없습니다.');
+    }
+
+    if (user.profileImageId) {
+      await this.filesService.deleteFile(user.profileImageId);
+    }
+
+    await this.db.delete(users).where(eq(users.id, id));
   }
 }

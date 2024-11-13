@@ -19,7 +19,7 @@ export class FilesService {
   private s3Bucket: string;
 
   constructor(
-    private configService: ConfigService,
+    private readonly configService: ConfigService,
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
   ) {
     this.s3 = new AWS.S3({

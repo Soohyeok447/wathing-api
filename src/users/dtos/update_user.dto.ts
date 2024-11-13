@@ -1,7 +1,19 @@
+import { Field, ID, InputType } from '@nestjs/graphql';
+
+@InputType()
 export class UpdateUserDto {
+  @Field(() => ID, { description: '유저의 고유 ID' })
   id: string;
+
+  @Field({ nullable: true, description: '유저 이름 (최소 2자, 최대 12자)' })
   name?: string;
+
+  @Field({ nullable: true, description: '생년월일 (yyyy-mm-dd 형식)' })
   birthday?: string;
+
+  @Field({ nullable: true, description: '상태 메시지 (최대 30자)' })
   statusMessage?: string;
+
+  @Field({ nullable: true, description: '프로필 이미지 ID' })
   profileImageId?: string;
 }
