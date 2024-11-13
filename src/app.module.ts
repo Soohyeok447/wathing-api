@@ -9,6 +9,7 @@ import { HttpModule } from '@nestjs/axios';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
+import { StoryModule } from './stories/story.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { join } from 'path';
     }),
     AuthModule,
     UsersModule,
+    StoryModule,
     HttpModule,
     TerminusModule,
   ],

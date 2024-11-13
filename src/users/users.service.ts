@@ -11,6 +11,7 @@ import { eq } from 'drizzle-orm';
 import { isDateString, isEmptyString } from '../utils/type_gurad';
 import { UpdateUserDto } from './dtos/update_user.dto';
 import { FilesService } from '../files/files.service';
+import { User as UserEntity } from '../users/user.type';
 
 @Injectable()
 export class UsersService {
@@ -25,7 +26,17 @@ export class UsersService {
     return result;
   }
 
-  async updateUser(updateUserDto: UpdateUserDto) {
+  async findGraphQLUserById(id: string): Promise<UserEntity> {
+    const user = await this.findById(id);
+
+    if (!user) {
+      throw new NotFoundException('유저를 찾을 수 없습니다.');
+    }
+
+    return user;
+  }
+
+  async updateUser(updateUserDto: UpdateUserDto): Promise<User> {
     const { id, name, birthday, statusMessage, profileImageId } = updateUserDto;
 
     if (!id) {

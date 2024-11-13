@@ -11,7 +11,7 @@ import { v4 } from 'uuid';
 import { files, NewFile } from '../data/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 @Injectable()
 export class FilesService {
@@ -87,6 +87,15 @@ export class FilesService {
     }
 
     return file;
+  }
+
+  async findFilesByIds(fileIds: string[]): Promise<schema.File[]> {
+    const filesList = await this.db
+      .select()
+      .from(files)
+      .where(inArray(files.id, fileIds));
+
+    return filesList;
   }
 
   async deleteFile(id: string): Promise<void> {

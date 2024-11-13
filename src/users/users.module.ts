@@ -7,7 +7,6 @@ import { FilesService } from '../files/files.service';
 @Module({
   imports: [DatabaseModule],
   providers: [UsersService, UsersResolver, FilesService],
-  controllers: [],
   exports: [UsersService],
 })
 export class UsersModule {}

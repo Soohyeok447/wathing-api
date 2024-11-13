@@ -1,6 +1,6 @@
 import { Field, ID, InputType } from '@nestjs/graphql';
 
-@InputType()
+@InputType({ description: '유저 수정에 필요한 입력 데이터' })
 export class UpdateUserDto {
   @Field(() => ID, { description: '유저의 고유 ID' })
   id: string;

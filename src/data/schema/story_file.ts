@@ -1,4 +1,4 @@
-import { pgTable, primaryKey, uuid } from 'drizzle-orm/pg-core';
+import { integer, pgTable, primaryKey, uuid } from 'drizzle-orm/pg-core';
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { stories } from './story';
 import { files } from './file';
@@ -12,6 +12,7 @@ export const storyFiles = pgTable(
     fileId: uuid('file_id')
       .notNull()
       .references(() => files.id, { onDelete: 'cascade' }),
+    order: integer('order').notNull(),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.fileId, t.storyId] }),

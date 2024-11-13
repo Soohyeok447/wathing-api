@@ -2,7 +2,8 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type UserResponseDto {
+"""유저 엔티티"""
+type User {
   """유저 ID"""
   id: ID!
 
@@ -23,6 +24,9 @@ type UserResponseDto {
 
   """마지막 업데이트 날짜"""
   updatedAt: DateTime
+
+  """프로필 이미지"""
+  profileImage: File
 }
 
 """
@@ -30,19 +34,92 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+"""파일 엔티티"""
+type File {
+  """파일 ID"""
+  id: ID!
+
+  """파일사이즈"""
+  size: Float!
+
+  """파일의 MIME 타입"""
+  type: String!
+
+  """파일의 storage 키"""
+  key: String!
+
+  """파일 업로드 일자"""
+  createdAt: DateTime!
+}
+
+"""스토리의 파일 순서"""
+type StoryFile {
+  """스토리에 포함된 파일"""
+  file: File!
+
+  """파일의 순서"""
+  order: Int!
+}
+
+"""스토리 엔티티"""
+type Story {
+  """스토리 ID"""
+  id: ID!
+
+  """스토리를 작성한 사용자"""
+  userId: String
+
+  """스토리 내용"""
+  content: String!
+
+  """스토리에 포함된 파일 목록"""
+  files: [StoryFile!]
+
+  """스토리 생성일자"""
+  createdAt: DateTime!
+
+  """스토리 수정일자"""
+  updatedAt: DateTime
+
+  """스토리를 작성한 사용자"""
+  user: User!
+}
+
 type Query {
-  """유저 찾기"""
-  user(id: String!): UserResponseDto!
+  """유저 찾기 (profileImage: File 필드 포함)"""
+  user(id: String!): User!
+
+  """스토리 조회"""
+  story(
+    """스토리 ID"""
+    id: ID!
+  ): Story!
 }
 
 type Mutation {
   """유저 수정"""
-  updateUser(update: UpdateUserDto!): UserResponseDto!
+  updateUser(input: UpdateUserDto!): User!
 
   """유저 삭제"""
   deleteUser(id: ID!): Boolean!
+
+  """새로운 스토리를 생성."""
+  createStory(input: CreateStoryDto!): Story!
+
+  """스토리 업데이트"""
+  updateStory(input: UpdateStoryDto!): Story!
+
+  """스토리를 삭제"""
+  deleteStory(
+    """스토리 ID"""
+    id: ID!
+
+    """작성자 ID"""
+    userId: ID!
+  ): Boolean!
 }
 
+"""유저 수정에 필요한 입력 데이터"""
 input UpdateUserDto {
   """유저의 고유 ID"""
   id: ID!
@@ -58,4 +135,40 @@ input UpdateUserDto {
 
   """프로필 이미지 ID"""
   profileImageId: String
+}
+
+"""스토리 생성에 필요한 입력 데이터"""
+input CreateStoryDto {
+  """유저 ID"""
+  userId: String!
+
+  """스토리의 내용"""
+  content: String!
+
+  """스토리에 포함될 파일과 순서 목록"""
+  files: [FileOrderInput!]
+}
+
+"""파일 ID와 순서를 나타내는 입력 데이터"""
+input FileOrderInput {
+  """파일 ID"""
+  fileId: ID!
+
+  """파일의 순서"""
+  order: Float!
+}
+
+"""스토리 업데이트에 필요한 입력 데이터"""
+input UpdateStoryDto {
+  """스토리 ID"""
+  id: ID!
+
+  """유저 ID"""
+  userId: String!
+
+  """스토리의 내용"""
+  content: String
+
+  """스토리에 포함될 파일과 순서 목록"""
+  files: [FileOrderInput!]
 }
