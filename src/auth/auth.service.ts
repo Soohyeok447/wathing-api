@@ -4,24 +4,25 @@ import {
   ConflictException,
   Inject,
   BadRequestException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { credentials, users } from '../data/schema';
-import { NewCredential, NewUser } from '../data/schema';
+import { NewCredential } from '../data/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
 import { isEmptyString, isDateString } from '../utils/type_gurad';
-import { UsersService } from '../users/users.service';
 import { eq } from 'drizzle-orm';
+import { FilesService } from '../files/files.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly usersService: UsersService,
+    private readonly filesService: FilesService,
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
   ) {}
 
@@ -61,6 +62,14 @@ export class AuthService {
       throw new BadRequestException('birthday는 yyyy-mm-dd 형식이어야 합니다.');
     }
 
+    if (profileImageId) {
+      const file = await this.filesService.readFile(profileImageId);
+
+      if (!file) {
+        throw new NotFoundException('유효하지 않은 프로필 이미지 ID입니다.');
+      }
+    }
+
     const [existing] = await this.db
       .select()
       .from(credentials)
@@ -76,9 +85,10 @@ export class AuthService {
 
     // 트랜잭션
     const userId = await this.db.transaction(async (tx) => {
-      const newUser: NewUser = {
-        name: name,
-        birthday: birthday,
+      const newUser = {
+        name,
+        birthday,
+        profileImageId,
       };
 
       const [result] = await tx
@@ -113,8 +123,8 @@ export class AuthService {
     id: string,
     password: string,
   ): Promise<{
-    access_token: string;
-    refresh_token: string;
+    accessToken: string;
+    refreshToken: string;
   }> {
     if (!id) {
       throw new BadRequestException('ID는 필수 입력 사항입니다.');
@@ -143,7 +153,7 @@ export class AuthService {
       .set({ refreshToken })
       .where(eq(credentials.userId, credential.userId));
 
-    return { access_token: accessToken, refresh_token: refreshToken };
+    return { accessToken, refreshToken };
   }
 
   async refresh(refreshToken: string): Promise<{

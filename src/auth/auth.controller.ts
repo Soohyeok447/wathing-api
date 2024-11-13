@@ -2,15 +2,26 @@ import {
   Controller,
   Post,
   Req,
-  UseGuards,
   Body,
   UnauthorizedException,
   BadRequestException,
+  ConflictException,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt.guard';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { SignUpDto } from './dtos/signup.dto';
+import { SignInDto } from './dtos/signin.dto';
+import {
+  AccessTokenResponseDto,
+  AuthResponseDto,
+} from './dtos/auth_response.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -18,9 +29,31 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  @ApiOperation({ summary: '유저 회원가입' })
-  @ApiResponse({ status: 201, description: 'Signup successful' })
-  async signUp(@Body() body) {
+  @ApiOperation({
+    summary: '유저 회원가입',
+    description:
+      '유저가 회원가입을 통해 액세스 및 리프레시 토큰을 발급받습니다.',
+  })
+  @ApiCreatedResponse({
+    description: '성공적으로 회원가입 완료',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '입력 데이터가 잘못됨',
+    type: BadRequestException,
+  })
+  @ApiResponse({
+    status: 404,
+    description: '프로필 이미지 Id가 잘못됨',
+    type: NotFoundException,
+  })
+  @ApiResponse({
+    status: 409,
+    description: '이미 가입된 사용자',
+    type: ConflictException,
+  })
+  async signUp(@Body() body: SignUpDto) {
     const { id, password, name, birthday, profileImageId } = body;
 
     const { accessToken, refreshToken } = await this.authService.signup(
@@ -35,15 +68,51 @@ export class AuthController {
   }
 
   @Post('signin')
-  @ApiOperation({ summary: '유저 로그인' })
-  async signin(@Body() body) {
+  @ApiOperation({
+    summary: '유저 로그인',
+    description: '유저가 로그인을 통해 액세스 및 리프레시 토큰을 발급받습니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '성공적으로 로그인 완료',
+    type: AuthResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'ID 또는 비밀번호가 잘못됨',
+    type: BadRequestException,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '아이디 또는 비밀번호가 올바르지 않음',
+    type: UnauthorizedException,
+  })
+  async signin(@Body() body: SignInDto): Promise<AuthResponseDto> {
     const { id, password } = body;
 
     return this.authService.signin(id, password);
   }
 
   @Post('refresh')
-  @ApiOperation({ summary: 'JWT 재발급' })
+  @ApiOperation({
+    summary: 'JWT 재발급',
+    description: '만료된 JWT 액세스 토큰을 새로 발급받습니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'JWT 재발급 성공',
+    type: AccessTokenResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: '유효하지 않거나 만료된 리프레시 토큰',
+    type: UnauthorizedException,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '리프레시 토큰 갱신 오류',
+    type: BadRequestException,
+  })
   async refreshToken(@Req() req: Request) {
     const authHeader = req.headers['authorization'];
 
