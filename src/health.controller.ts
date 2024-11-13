@@ -1,25 +1,18 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import {
-  HealthCheckService,
-  HealthCheck,
-  HttpHealthIndicator,
-} from '@nestjs/terminus';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
-  constructor(
-    private health: HealthCheckService,
-    private http: HttpHealthIndicator,
-  ) {}
-
   @Get()
   @ApiOperation({ summary: 'Health check' })
-  @HealthCheck()
+  @ApiResponse({
+    status: 200,
+    description: '서버 구동중',
+    type: 'string',
+    example: 'ok',
+  })
   check() {
-    return this.health.check([
-      () => this.http.pingCheck('nestjs-docs', 'https://docs.nestjs.com'),
-    ]);
+    return 'ok';
   }
 }
