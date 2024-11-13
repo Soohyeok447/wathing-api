@@ -16,7 +16,6 @@ import {
   ApiConsumes,
   ApiCreatedResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { uuidExample } from '../common/swagger_example';

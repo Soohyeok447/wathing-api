@@ -5,8 +5,6 @@ import {
   Body,
   UnauthorizedException,
   BadRequestException,
-  ConflictException,
-  NotFoundException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
