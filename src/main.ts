@@ -4,17 +4,19 @@ import { HttpExceptionFilter } from './core/filters/http_exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    cors: { credentials: true, origin: '*' },
+  });
 
   const isDevelopment = process.env.NODE_ENV === 'development';
 
   const host = process.env.HOST || '127.0.0.1';
   const port = parseInt(process.env.PORT, 10) || 3000;
 
-  const corsOptions = {
-    origin: isDevelopment ? '*' : [`${host}:${port}`, 'http://localhost:3000'],
-  };
-  app.enableCors(corsOptions);
+  // const corsOptions = {
+  //   origin: isDevelopment ? '*' : [`${host}:${port}`, 'http://localhost:3000'],
+  // };
+  // app.enableCors(corsOptions);
 
   app.setGlobalPrefix('api');
 
