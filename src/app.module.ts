@@ -34,6 +34,7 @@ import { StoryModule } from './stories/story.module';
       driver: ApolloDriver,
       debug: true,
       playground: true,
+      introspection: true,
     }),
     AuthModule,
     UsersModule,
