@@ -145,9 +145,15 @@ export class StoryService {
       .from(storyFilesTable)
       .where(eq(storyFilesTable.storyId, storyId));
 
+    if (storyFilesData.length === 0) {
+      return [];
+    }
+
     const detailedStoryFiles = await Promise.all(
       storyFilesData.map(async (sf) => {
-        const file = await this.filesService.readFile(sf.fileId); // 파일 상세 정보 조회
+        const file = await this.filesService
+          .readFile(sf.fileId)
+          .catch(() => null);
         return {
           file,
           order: sf.order,
@@ -155,6 +161,6 @@ export class StoryService {
       }),
     );
 
-    return detailedStoryFiles;
+    return detailedStoryFiles.filter((sf) => sf.file !== null);
   }
 }
