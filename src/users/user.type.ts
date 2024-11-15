@@ -1,4 +1,4 @@
-import { Field, ObjectType, ID } from '@nestjs/graphql';
+import { Field, ObjectType, ID, Int } from '@nestjs/graphql';
 
 @ObjectType({ description: '유저 엔티티' })
 export class User {
@@ -16,6 +16,18 @@ export class User {
 
   @Field({ nullable: true, description: '프로필 이미지 ID' })
   profileImageId?: string;
+
+  @Field(() => Int, { description: '팔로워 수', defaultValue: 0 })
+  followersCount?: number;
+
+  @Field(() => Int, { description: '팔로잉 수', defaultValue: 0 })
+  followingCount?: number;
+
+  @Field(() => [User], { description: '팔로워 목록', nullable: true })
+  followers?: User[];
+
+  @Field(() => [User], { description: '팔로잉 목록', nullable: true })
+  following?: User[];
 
   @Field({ description: '생성된 날짜' })
   createdAt: Date;

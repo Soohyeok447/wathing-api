@@ -19,6 +19,18 @@ type User {
   """프로필 이미지 ID"""
   profileImageId: String
 
+  """팔로워 수"""
+  followersCount: Int!
+
+  """팔로잉 수"""
+  followingCount: Int!
+
+  """팔로워 목록"""
+  followers: [User!]
+
+  """팔로잉 목록"""
+  following: [User!]
+
   """생성된 날짜"""
   createdAt: DateTime!
 
@@ -102,6 +114,18 @@ type Mutation {
 
   """유저 삭제"""
   deleteUser(id: ID!): Boolean!
+
+  """유저 팔로우"""
+  followUser(
+    """팔로우할 유저 ID"""
+    userId: ID!
+  ): Boolean!
+
+  """유저 언팔로우"""
+  unfollowUser(
+    """언팔로우할 유저 ID"""
+    userId: ID!
+  ): Boolean!
 
   """새로운 스토리를 생성."""
   createStory(input: CreateStoryDto!): Story!

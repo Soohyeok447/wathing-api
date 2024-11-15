@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from './files.service';
-import { JwtAuthGuard } from '../auth/jwt.guard';
+import { JwtAuthGuard } from '../core/guards/jwt.guard';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,

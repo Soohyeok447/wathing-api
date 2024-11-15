@@ -7,11 +7,12 @@ import {
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User, users } from '../data/schema';
 import * as schema from '../data/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray, and } from 'drizzle-orm';
 import { isDateString, isEmptyString } from '../utils/type_gurad';
 import { UpdateUserDto } from './dtos/update_user.dto';
 import { FilesService } from '../files/files.service';
 import { User as UserEntity } from '../users/user.type';
+import { followers } from '../data/schema/follower';
 
 @Injectable()
 export class UsersService {
@@ -34,6 +35,116 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async followUser(userId: string, followingId: string): Promise<void> {
+    console.log('뭐냐');
+
+    if (userId === followingId) {
+      throw new BadRequestException('자기 자신을 팔로우할 수 없습니다.');
+    }
+
+    const followingUser = await this.findById(followingId);
+
+    if (!followingUser) {
+      throw new NotFoundException('팔로우할 유저를 찾을 수 없습니다.');
+    }
+
+    const [existingFollow] = await this.db
+      .select()
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followerId, userId),
+          eq(followers.followingId, followingId),
+        ),
+      );
+
+    if (existingFollow) {
+      throw new BadRequestException('이미 팔로우 중입니다.');
+    }
+
+    await this.db.insert(followers).values({
+      followerId: userId,
+      followingId,
+    });
+  }
+
+  async unfollowUser(userId: string, unfollowingId: string): Promise<void> {
+    if (userId === unfollowingId) {
+      throw new BadRequestException('자기 자신을 언팔로우할 수 없습니다.');
+    }
+
+    const [existingFollow] = await this.db
+      .select()
+      .from(followers)
+      .where(
+        and(
+          eq(followers.followerId, userId),
+          eq(followers.followingId, unfollowingId),
+        ),
+      );
+
+    if (!existingFollow) {
+      throw new BadRequestException('팔로우 관계가 존재하지 않습니다.');
+    }
+
+    await this.db
+      .delete(followers)
+      .where(
+        and(
+          eq(followers.followerId, userId),
+          eq(followers.followingId, unfollowingId),
+        ),
+      );
+  }
+
+  async getFollowersCount(userId: string): Promise<number> {
+    return await this.db.$count(followers, eq(followers.followingId, userId));
+  }
+
+  async getFollowingCount(userId: string): Promise<number> {
+    return await this.db.$count(followers, eq(followers.followerId, userId));
+  }
+
+  async getFollowers(userId: string): Promise<User[]> {
+    const followerRelations = await this.db
+      .select()
+      .from(followers)
+      .where(eq(followers.followingId, userId));
+
+    const followerIds = followerRelations.map((rel) => rel.followerId);
+
+    if (followerIds.length === 0) {
+      return [];
+    }
+
+    const followersList = await this.db
+      .select()
+      .from(users)
+      .where(inArray(users.id, followerIds));
+
+    return followersList;
+  }
+
+  async getFollowing(userId: string): Promise<User[]> {
+    const followingRelations = await this.db
+      .select()
+      .from(followers)
+      .where(eq(followers.followerId, userId));
+
+    const followingIds = followingRelations.map((rel) => rel.followingId);
+
+    if (followingIds.length === 0) {
+      return [];
+    }
+
+    const followingList = await this.db
+      .select()
+      .from(users)
+      .where(inArray(users.id, followingIds));
+
+    return followingList;
   }
 
   async updateUser(updateUserDto: UpdateUserDto): Promise<User> {
