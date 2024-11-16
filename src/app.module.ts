@@ -6,11 +6,11 @@ import { UsersModule } from './users/users.module';
 import { TerminusModule } from '@nestjs/terminus';
 import { HealthController } from './health.controller';
 import { HttpModule } from '@nestjs/axios';
-import { GraphQLModule } from '@nestjs/graphql';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { join } from 'path';
 import { StoryModule } from './stories/story.module';
 import { CommentsModule } from './comments/comments.module';
+import { GraphQLModule } from './core/config/graphql.module';
+import { MessagesModule } from './messages/messages.module';
+import { RoomsModule } from './rooms/rooms.module';
 
 @Module({
   imports: [
@@ -21,26 +21,13 @@ import { CommentsModule } from './comments/comments.module';
       ignoreEnvFile: process.env.NODE_ENV !== 'development',
     }),
     DatabaseModule,
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      // formatError: (error) => {
-      //   const graphQLFormattedError = {
-      //     message: error.message,
-      //     statusCode: error.extensions?.originalError['statusCode'],
-      //     error: error.extensions?.originalError['error'],
-      //     path: error.path,
-      //   };
-      //   return graphQLFormattedError;
-      // },
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      driver: ApolloDriver,
-      debug: true,
-      playground: true,
-      introspection: true,
-    }),
+    GraphQLModule,
     AuthModule,
     UsersModule,
     StoryModule,
     CommentsModule,
+    RoomsModule,
+    MessagesModule,
     HttpModule,
     TerminusModule,
   ],

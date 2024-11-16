@@ -11,7 +11,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly usersService: UsersService,
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: (req) => {
+        let token = null;
+
+        if (req.headers && req.headers.authorization) {
+          // HTTP 요청에서 토큰 추출
+          token = req.headers.authorization;
+        } else if (req.authorization) {
+          // WebSocket 요청에서 토큰 추출 (connectionParams에 포함된 경우)
+          token = req.authorization;
+        } else if (req.headers && req.headers.Authorization) {
+          // 대문자로 전달되는 경우
+          token = req.headers.Authorization;
+        }
+
+        if (token && token.startsWith('Bearer ')) {
+          return token.slice(7);
+        }
+
+        return token;
+      },
+      // ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKey: configService.get<string>('JWT_SECRET'),
       ignoreExpiration: false,
     });
