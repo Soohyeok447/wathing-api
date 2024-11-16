@@ -10,6 +10,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { StoryModule } from './stories/story.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { StoryModule } from './stories/story.module';
     AuthModule,
     UsersModule,
     StoryModule,
+    CommentsModule,
     HttpModule,
     TerminusModule,
   ],

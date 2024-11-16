@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
+import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
 import { StoryFile } from './story_file.type';
 
 @ObjectType({ description: '스토리 엔티티' })
@@ -17,6 +17,9 @@ export class Story {
     description: '스토리에 포함된 파일 목록',
   })
   files?: StoryFile[];
+
+  @Field(() => Int, { description: '댓글 개수' })
+  commentsCount?: number;
 
   @Field({ description: '스토리 생성일자' })
   createdAt: Date;

@@ -10,12 +10,13 @@ import { UsersService } from '../users/users.service';
 import { FilesService } from '../files/files.service';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
-import { stories } from './../data/schema';
+import { comments, stories } from './../data/schema';
 import { storyFiles as storyFilesTable } from './../data/schema';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { isEmptyString } from '../utils/type_gurad';
 import { StoryFile } from './types/story_file.type';
 import { UpdateStoryDto } from './dtos/update_story.dto';
+import { StoryConnection } from './types/story_connection.type';
 
 @Injectable()
 export class StoryService {
@@ -25,9 +26,72 @@ export class StoryService {
     private readonly filesService: FilesService,
   ) {}
 
-  async createStory(createStoryDto: CreateStoryDto): Promise<Story> {
-    const { userId, content, files } = createStoryDto;
+  async findStoryById(id: string): Promise<Story> {
+    const [story] = await this.db
+      .select()
+      .from(stories)
+      .where(eq(stories.id, id));
 
+    if (!story) {
+      throw new NotFoundException('스토리를 찾을 수 없습니다.');
+    }
+
+    return story;
+  }
+
+  async findStoryFiles(storyId: string): Promise<StoryFile[]> {
+    const storyFilesData = await this.db
+      .select()
+      .from(storyFilesTable)
+      .where(eq(storyFilesTable.storyId, storyId));
+
+    if (storyFilesData.length === 0) {
+      return [];
+    }
+
+    const detailedStoryFiles = await Promise.all(
+      storyFilesData.map(async (sf) => {
+        const file = await this.filesService
+          .readFile(sf.fileId)
+          .catch(() => null);
+        return {
+          file,
+          order: sf.order,
+        };
+      }),
+    );
+
+    return detailedStoryFiles.filter((sf) => sf.file !== null);
+  }
+
+  async getStories(limit: number, offset = 0): Promise<StoryConnection> {
+    const storiesData = await this.db
+      .select()
+      .from(stories)
+      .orderBy(desc(stories.createdAt))
+      .limit(limit + 1)
+      .offset(offset);
+
+    const hasNextPage = storiesData.length > limit;
+    const edges = hasNextPage ? storiesData.slice(0, -1) : storiesData;
+
+    const nextOffset = offset + limit;
+
+    return {
+      edges,
+      hasNextPage,
+      nextOffset: hasNextPage ? nextOffset : null,
+    };
+  }
+
+  async getCommentsCount(storyId: string): Promise<number> {
+    return await this.db.$count(comments, eq(comments.storyId, storyId));
+  }
+
+  async createStory(
+    userId: string,
+    { content, files }: CreateStoryDto,
+  ): Promise<Story> {
     if (isEmptyString(content)) {
       throw new BadRequestException('스토리의 내용은 빈 문자열일 수 없습니다.');
     }
@@ -68,9 +132,10 @@ export class StoryService {
     return newStory;
   }
 
-  async updateStory(updateStoryDto: UpdateStoryDto): Promise<Story> {
-    const { id, userId, content, files } = updateStoryDto;
-
+  async updateStory(
+    userId: string,
+    { id, content, files }: UpdateStoryDto,
+  ): Promise<Story> {
     const existingStory = await this.findStoryById(id);
 
     if (!existingStory) {
@@ -110,7 +175,7 @@ export class StoryService {
     return updatedStory;
   }
 
-  async deleteStory(id: string, userId: string): Promise<boolean> {
+  async deleteStory(userId: string, id: string): Promise<boolean> {
     const existingStory = await this.findStoryById(id);
 
     if (!existingStory) {
@@ -124,43 +189,5 @@ export class StoryService {
     await this.db.delete(stories).where(eq(stories.id, id));
 
     return true;
-  }
-
-  async findStoryById(id: string): Promise<Story> {
-    const [story] = await this.db
-      .select()
-      .from(stories)
-      .where(eq(stories.id, id));
-
-    if (!story) {
-      throw new NotFoundException('스토리를 찾을 수 없습니다.');
-    }
-
-    return story;
-  }
-
-  async findStoryFiles(storyId: string): Promise<StoryFile[]> {
-    const storyFilesData = await this.db
-      .select()
-      .from(storyFilesTable)
-      .where(eq(storyFilesTable.storyId, storyId));
-
-    if (storyFilesData.length === 0) {
-      return [];
-    }
-
-    const detailedStoryFiles = await Promise.all(
-      storyFilesData.map(async (sf) => {
-        const file = await this.filesService
-          .readFile(sf.fileId)
-          .catch(() => null);
-        return {
-          file,
-          order: sf.order,
-        };
-      }),
-    );
-
-    return detailedStoryFiles.filter((sf) => sf.file !== null);
   }
 }

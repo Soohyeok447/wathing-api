@@ -87,6 +87,9 @@ type Story {
   """스토리에 포함된 파일 목록"""
   files: [StoryFile!]
 
+  """댓글 개수"""
+  commentsCount: Int!
+
   """스토리 생성일자"""
   createdAt: DateTime!
 
@@ -95,6 +98,45 @@ type Story {
 
   """스토리를 작성한 사용자"""
   user: User!
+
+  """댓글 목록"""
+  comments(limit: Int = 5, offset: Int = 0): CommentConnection!
+}
+
+type StoryConnection {
+  edges: [Story!]!
+  hasNextPage: Boolean!
+  nextOffset: Float
+}
+
+"""댓글 엔티티"""
+type Comment {
+  """댓글 ID"""
+  id: ID!
+
+  """작성자 ID"""
+  userId: ID!
+
+  """작성자"""
+  user: User!
+
+  """스토리 ID"""
+  storyId: ID!
+
+  """댓글 내용"""
+  content: String!
+
+  """작성일"""
+  createdAt: DateTime!
+
+  """댓글 목록"""
+  comments(limit: Int = 5, offset: Int = 0): CommentConnection!
+}
+
+type CommentConnection {
+  edges: [Comment!]!
+  hasNextPage: Boolean!
+  nextOffset: Float
 }
 
 type Query {
@@ -106,6 +148,9 @@ type Query {
     """스토리 ID"""
     id: ID!
   ): Story!
+
+  """스토리 목록 조회"""
+  stories(limit: Int = 5, offset: Int = 0): StoryConnection!
 }
 
 type Mutation {
@@ -137,9 +182,18 @@ type Mutation {
   deleteStory(
     """스토리 ID"""
     id: ID!
+  ): Boolean!
 
-    """작성자 ID"""
-    userId: ID!
+  """댓글 생성"""
+  createComment(input: CreateCommentDto!): Comment!
+
+  """댓글 수정"""
+  updateComment(input: UpdateCommentDto!): Comment!
+
+  """댓글 삭제"""
+  deleteComment(
+    """댓글 ID"""
+    id: ID!
   ): Boolean!
 }
 
@@ -163,9 +217,6 @@ input UpdateUserDto {
 
 """스토리 생성에 필요한 입력 데이터"""
 input CreateStoryDto {
-  """유저 ID"""
-  userId: String!
-
   """스토리의 내용"""
   content: String!
 
@@ -187,12 +238,25 @@ input UpdateStoryDto {
   """스토리 ID"""
   id: ID!
 
-  """유저 ID"""
-  userId: String!
-
   """스토리의 내용"""
   content: String
 
   """스토리에 포함될 파일과 순서 목록"""
   files: [FileOrderInput!]
+}
+
+input CreateCommentDto {
+  """스토리 ID"""
+  storyId: ID!
+
+  """댓글 내용"""
+  content: String!
+}
+
+input UpdateCommentDto {
+  """댓글 ID"""
+  id: ID!
+
+  """수정할 내용"""
+  content: String!
 }

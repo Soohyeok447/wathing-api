@@ -6,9 +6,6 @@ export class UpdateStoryDto {
   @Field(() => ID, { description: '스토리 ID' })
   id: string;
 
-  @Field({ description: '유저 ID' })
-  userId: string;
-
   @Field({ nullable: true, description: '스토리의 내용' })
   content?: string;
 
