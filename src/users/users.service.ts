@@ -38,8 +38,6 @@ export class UsersService {
   }
 
   async followUser(userId: string, followingId: string): Promise<void> {
-    console.log('뭐냐');
-
     if (userId === followingId) {
       throw new BadRequestException('자기 자신을 팔로우할 수 없습니다.');
     }
@@ -147,11 +145,12 @@ export class UsersService {
     return followingList;
   }
 
-  async updateUser(updateUserDto: UpdateUserDto): Promise<User> {
-    const { id, name, birthday, statusMessage, profileImageId } = updateUserDto;
-
+  async updateUser(
+    id: string,
+    { name, birthday, statusMessage, profileImageId }: UpdateUserDto,
+  ): Promise<User> {
     if (!id) {
-      throw new BadRequestException('id는 필수 입력 사항입니다.');
+      throw new BadRequestException('id가 없습니다.');
     }
 
     if ((name && isEmptyString(name)) || name.length < 2 || name.length > 12) {

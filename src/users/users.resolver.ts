@@ -26,7 +26,7 @@ export class UsersResolver {
 
   @Query(() => User, {
     name: 'user',
-    description: '유저 찾기 (profileImage: File 필드 포함)',
+    description: '유저 찾기',
   })
   async findById(
     @Args('id', { type: () => String }) id: string,
@@ -44,15 +44,24 @@ export class UsersResolver {
   }
 
   @Mutation(() => User, { description: '유저 수정' })
-  async updateUser(@Args('input') input: UpdateUserDto): Promise<User> {
-    return this.usersService.updateUser(input);
+  @UseGuards(GqlAuthGuard)
+  async updateUser(
+    @Args('input')
+    { name, birthday, statusMessage, profileImageId }: UpdateUserDto,
+    @CurrentUser() currentUser: User,
+  ): Promise<User> {
+    return this.usersService.updateUser(currentUser.id, {
+      name,
+      birthday,
+      statusMessage,
+      profileImageId,
+    });
   }
 
   @Mutation(() => Boolean, { description: '유저 삭제' })
-  async deleteUser(
-    @Args('id', { type: () => ID }) id: string,
-  ): Promise<boolean> {
-    await this.usersService.deleteUser(id);
+  @UseGuards(GqlAuthGuard)
+  async deleteUser(@CurrentUser() currentUser: User): Promise<boolean> {
+    await this.usersService.deleteUser(currentUser.id);
 
     return true;
   }
