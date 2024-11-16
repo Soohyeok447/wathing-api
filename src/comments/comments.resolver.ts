@@ -5,7 +5,6 @@ import {
   Parent,
   ResolveField,
   ID,
-  Int,
 } from '@nestjs/graphql';
 import { CommentsService } from './comments.service';
 import { Comment } from './types/comment.type';
@@ -16,8 +15,6 @@ import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
 import { CurrentUser } from '../core/decorators/current_user.decorator';
 import { UpdateCommentDto } from './dtos/update_comment.dto';
-import { CommentConnection } from './types/comment_connection.typs';
-import { Story } from '../stories/types/story.type';
 
 @Resolver(() => Comment)
 export class CommentsResolver {
@@ -25,17 +22,6 @@ export class CommentsResolver {
     private readonly commentsService: CommentsService,
     private readonly usersService: UsersService,
   ) {}
-
-  @ResolveField(() => CommentConnection, { description: '댓글 목록' })
-  async comments(
-    @Parent() story: Story,
-    @Args('limit', { type: () => Int, nullable: true, defaultValue: 5 })
-    limit: number,
-    @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
-    offset: number,
-  ): Promise<CommentConnection> {
-    return this.commentsService.getCommentsByStoryId(story.id, limit, offset);
-  }
 
   @ResolveField(() => User, { description: '댓글 작성자' })
   async user(@Parent() comment: Comment): Promise<User> {
