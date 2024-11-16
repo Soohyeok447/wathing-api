@@ -54,10 +54,14 @@ export class StoryService {
         const file = await this.filesService
           .readFile(sf.fileId)
           .catch(() => null);
-        return {
-          file,
-          order: sf.order,
-        };
+
+        if (!file) return null;
+        else {
+          return {
+            file,
+            order: sf.order,
+          };
+        }
       }),
     );
 

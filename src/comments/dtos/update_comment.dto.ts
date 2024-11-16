@@ -1,6 +1,6 @@
 import { InputType, Field, ID } from '@nestjs/graphql';
 
-@InputType()
+@InputType({ description: '댓글 업데이트에 필요한 입력 데이터' })
 export class UpdateCommentDto {
   @Field(() => ID, { description: '댓글 ID' })
   id: string;

@@ -104,7 +104,7 @@ export class AuthController {
     status: 400,
     description: '리프레시 토큰 갱신 오류',
   })
-  async refreshToken(@Req() req: Request) {
+  async refreshToken(@Req() req) {
     const authHeader = req.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
