@@ -65,7 +65,7 @@ export class StoryService {
       }),
     );
 
-    return detailedStoryFiles.filter((sf) => sf.file !== null);
+    return detailedStoryFiles.filter((sf) => sf !== null);
   }
 
   async getStories(limit: number, offset = 0): Promise<StoryConnection> {
@@ -162,11 +162,11 @@ export class StoryService {
       .where(eq(stories.id, id))
       .returning();
 
-    if (files) {
-      await this.db
-        .delete(storyFilesTable)
-        .where(eq(storyFilesTable.storyId, id));
+    await this.db
+      .delete(storyFilesTable)
+      .where(eq(storyFilesTable.storyId, id));
 
+    if (files && files.length > 0) {
       const storyFilesData = files.map((file) => ({
         storyId: id,
         fileId: file.fileId,
