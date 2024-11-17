@@ -16,4 +16,4 @@ credentials
 .*.Dockerfile
 Dockerfile
 
-drizzle
+src/data/drizzle
