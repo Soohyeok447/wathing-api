@@ -88,6 +88,37 @@ export class StoryService {
     };
   }
 
+  async findStoriesByUserId(
+    userId: string,
+    limit: number,
+    offset: number,
+  ): Promise<StoryConnection> {
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('존재하지 않는 유저입니다.');
+    }
+
+    const userStoriesData = await this.db
+      .select()
+      .from(stories)
+      .where(eq(stories.userId, userId))
+      .orderBy(desc(stories.createdAt))
+      .limit(limit + 1)
+      .offset(offset);
+
+    const hasNextPage = userStoriesData.length > limit;
+    const edges = hasNextPage ? userStoriesData.slice(0, -1) : userStoriesData;
+
+    const nextOffset = hasNextPage ? offset + limit : null;
+
+    return {
+      edges,
+      hasNextPage,
+      nextOffset,
+    };
+  }
+
   async getCommentsCount(storyId: string): Promise<number> {
     return await this.db.$count(comments, eq(comments.storyId, storyId));
   }
