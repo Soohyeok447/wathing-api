@@ -12,7 +12,7 @@ export const storyFiles = pgTable(
     fileId: uuid('file_id')
       .notNull()
       .references(() => files.id, { onDelete: 'cascade' }),
-    order: integer('order').default(0).notNull(),
+    order: integer('order').notNull(),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.fileId, t.storyId] }),
