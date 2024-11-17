@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { uuidExample } from '../common/swagger_example';
+import { File } from '../data/schema';
 
 @ApiTags('Files')
 @ApiBearerAuth()
@@ -57,7 +58,13 @@ export class FilesController {
   })
   @ApiCreatedResponse({
     description: '파일 업로드 성공',
-    example: { id: uuidExample },
+    example: {
+      id: uuidExample,
+      type: 'image/jpeg',
+      size: 369417,
+      key: 'profile/0d4597af-43e4-432c-bca5-dd10829912e0',
+      createdAt: '2024-11-10 23:54:38.803',
+    },
   })
   @ApiBadRequestResponse({
     description:
@@ -66,9 +73,7 @@ export class FilesController {
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
     @Body('dir') dir: string,
-  ): Promise<{ id: string }> {
-    return {
-      id: await this.filesService.uploadFile(file, dir),
-    };
+  ): Promise<File> {
+    return await this.filesService.uploadFile(file, dir);
   }
 }
