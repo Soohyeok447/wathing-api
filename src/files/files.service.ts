@@ -30,7 +30,10 @@ export class FilesService {
     this.s3Bucket = this.configService.get<string>('S3_BUCKET_NAME');
   }
 
-  async uploadFile(file: Express.Multer.File, dir: string): Promise<string> {
+  async uploadFile(
+    file: Express.Multer.File,
+    dir: string,
+  ): Promise<schema.File> {
     if (!file) {
       throw new BadRequestException('파일이 제공되지 않았습니다.');
     }
@@ -71,12 +74,9 @@ export class FilesService {
       key: fileName,
     };
 
-    const [result] = await this.db
-      .insert(files)
-      .values(newFile)
-      .returning({ id: files.id });
+    const [result] = await this.db.insert(files).values(newFile).returning();
 
-    return result.id;
+    return result;
   }
 
   async readFile(id: string): Promise<schema.File> {
