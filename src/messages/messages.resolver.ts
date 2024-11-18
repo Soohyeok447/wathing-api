@@ -18,6 +18,8 @@ import { Room } from '../rooms/room.type';
 import { RoomsService } from '../rooms/rooms.service';
 import { UsersService } from '../users/users.service';
 
+const subscriptionSet = new Set<string>();
+
 @Resolver(() => Message)
 export class MessagesResolver {
   constructor(
@@ -67,6 +69,8 @@ export class MessagesResolver {
     @Args('roomId', { type: () => ID }) roomId: string,
     @CurrentUser() currentUser: User,
   ) {
+    const subscriptionKey = `${currentUser.id}-${roomId}`;
+
     console.log(currentUser.name + ' - 구독 시작');
 
     const isUserInRoom = this.roomsService.isUserInRoom(roomId, currentUser.id);
@@ -76,6 +80,23 @@ export class MessagesResolver {
       throw new ForbiddenException('채팅방에 속해있지 않습니다.');
     }
 
-    return pubSub.asyncIterableIterator(`onMessage:${roomId}`);
+    if (subscriptionSet.has(subscriptionKey)) {
+      console.log(
+        `구독 중복 방지: ${currentUser.name}은 이미 ${roomId} 방을 구독하고 있습니다.`,
+      );
+      return null;
+    }
+
+    subscriptionSet.add(subscriptionKey);
+
+    const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
+
+    asyncIterator.return = () => {
+      subscriptionSet.delete(subscriptionKey);
+
+      return Promise.resolve({ done: true, value: undefined });
+    };
+
+    return asyncIterator;
   }
 }
