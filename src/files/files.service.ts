@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as AWS from 'aws-sdk';
-import { resizeImage, rotateImage } from '../utils/image';
+import { resizeImage } from '../utils/image';
 import { v4 } from 'uuid';
 import { files, NewFile } from '../data/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
@@ -54,7 +54,7 @@ export class FilesService {
     }
 
     const fileBuffer = isImage
-      ? await rotateImage(await resizeImage(file.buffer, 800))
+      ? await resizeImage(file.buffer, 800)
       : file.buffer;
 
     const fileName = `${dir}/${v4()}`;
