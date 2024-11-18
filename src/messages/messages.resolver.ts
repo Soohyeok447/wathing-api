@@ -60,7 +60,7 @@ export class MessagesResolver {
     name: 'onMessage',
     description: '새로운 메시지 구독',
     filter: (payload, variables) =>
-      payload.messageSent.roomId === variables.roomId,
+      payload.onMessage.roomId === variables.roomId,
   })
   @UseGuards(GqlAuthGuard)
   onMessage(
