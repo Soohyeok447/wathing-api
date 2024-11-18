@@ -108,7 +108,7 @@ export class AuthService {
       return result.id;
     });
 
-    const accessToken = this.createAccessToken(userId);
+    const accessToken = await this.createAccessToken(userId);
     const refreshToken = this.createRefreshToken(userId);
 
     await this.db
@@ -145,7 +145,7 @@ export class AuthService {
       );
     }
 
-    const accessToken = this.createAccessToken(credential.userId);
+    const accessToken = await this.createAccessToken(credential.userId);
     const refreshToken = this.createRefreshToken(credential.userId);
 
     await this.db
@@ -170,8 +170,21 @@ export class AuthService {
     };
   }
 
-  private createAccessToken(userId: string): string {
-    const payload = { sub: userId };
+  private async createAccessToken(userId: string): Promise<string> {
+    const [user] = await this.db
+      .select({
+        name: schema.users.name,
+        profileImageKey: schema.files.key,
+      })
+      .from(schema.users)
+      .leftJoin(schema.files, eq(schema.users.profileImageId, schema.files.id))
+      .where(eq(schema.users.id, userId));
+
+    const payload = {
+      sub: userId,
+      name: user.name,
+      profileImageKey: user.profileImageKey || null,
+    };
 
     return this.jwtService.sign(payload);
   }

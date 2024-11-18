@@ -8,9 +8,11 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../data/schema';
 import { rooms } from '../data/schema/room';
 import { roomUsers } from '../data/schema/room_user';
-import { eq, inArray, and } from 'drizzle-orm';
+import { eq, inArray, and, desc } from 'drizzle-orm';
 import { User } from '../users/user.type';
 import { Room } from './room.type';
+import { MessageConnection } from '../messages/types/message_connection.type';
+import { messages } from '../data/schema/message';
 
 @Injectable()
 export class RoomsService {
@@ -35,6 +37,32 @@ export class RoomsService {
     await this.db.insert(roomUsers).values(roomUsersData);
 
     return newRoom;
+  }
+
+  async leaveRoom(roomId: string, userId: string): Promise<boolean> {
+    const isUserInRoom = await this.isUserInRoom(roomId, userId);
+
+    if (!isUserInRoom) {
+      throw new NotFoundException('사용자가 해당 채팅방에 존재하지 않습니다.');
+    }
+
+    // 트랜잭션 시작
+    await this.db.transaction(async (tx) => {
+      await tx
+        .delete(roomUsers)
+        .where(and(eq(roomUsers.roomId, roomId), eq(roomUsers.userId, userId)));
+
+      const remainingUsers = await tx
+        .select()
+        .from(roomUsers)
+        .where(eq(roomUsers.roomId, roomId));
+
+      if (remainingUsers.length === 1) {
+        await tx.delete(rooms).where(eq(rooms.id, roomId));
+      }
+    });
+
+    return true;
   }
 
   async findById(roomId: string): Promise<Room> {

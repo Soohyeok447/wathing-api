@@ -2,15 +2,13 @@ import {
   Resolver,
   Mutation,
   Args,
-  Query,
   ID,
-  Int,
   Subscription,
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
 import { MessagesService } from './messages.service';
-import { Message } from './message.type';
+import { Message } from './types/message.type';
 import { ForbiddenException, UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
 import { CurrentUser } from '../core/decorators/current_user.decorator';
@@ -51,41 +49,33 @@ export class MessagesResolver {
       content,
     );
 
-    // 구독자들에게 메시지 발행
-    pubSub.publish(`messageSent:${roomId}`, { messageSent: message });
+    await pubSub.publish(`onMessage:${roomId}`, { onMessage: message });
+
+    console.log(currentUser.name + ' - 메시지 전송함');
 
     return message;
   }
 
-  @Query(() => [Message], { description: '채팅방의 메시지 목록' })
-  @UseGuards(GqlAuthGuard)
-  async messagesInRoom(
-    @Args('roomId', { type: () => ID }) roomId: string,
-    @Args('limit', { type: () => Int, nullable: true, defaultValue: 20 })
-    limit: number,
-    @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
-    offset: number,
-  ): Promise<Message[]> {
-    return this.messagesService.getMessagesByRoomId(roomId, limit, offset);
-  }
-
   @Subscription(() => Message, {
-    name: 'messageSent',
+    name: 'onMessage',
     description: '새로운 메시지 구독',
     filter: (payload, variables) =>
       payload.messageSent.roomId === variables.roomId,
   })
   @UseGuards(GqlAuthGuard)
-  messageSent(
+  onMessage(
     @Args('roomId', { type: () => ID }) roomId: string,
     @CurrentUser() currentUser: User,
   ) {
+    console.log(currentUser.name + ' - 구독 시작');
+
     const isUserInRoom = this.roomsService.isUserInRoom(roomId, currentUser.id);
 
     if (!isUserInRoom) {
+      console.log(currentUser.name + ' - 채팅방에 속해있지 않습니다.');
       throw new ForbiddenException('채팅방에 속해있지 않습니다.');
     }
 
-    return pubSub.asyncIterableIterator(`messageSent:${roomId}`);
+    return pubSub.asyncIterableIterator(`onMessage:${roomId}`);
   }
 }

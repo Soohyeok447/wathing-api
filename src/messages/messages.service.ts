@@ -4,7 +4,8 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../data/schema';
 import { messages } from '../data/schema/message';
 import { eq, desc } from 'drizzle-orm';
-import { Message } from './message.type';
+import { Message } from './types/message.type';
+import { MessageConnection } from './types/message_connection.type';
 
 @Injectable()
 export class MessagesService {
@@ -29,7 +30,7 @@ export class MessagesService {
     roomId: string,
     limit = 20,
     offset = 0,
-  ): Promise<Message[]> {
+  ): Promise<MessageConnection> {
     const messagesResult = await this.db
       .select()
       .from(messages)
@@ -38,6 +39,15 @@ export class MessagesService {
       .limit(limit)
       .offset(offset);
 
-    return messagesResult;
+    const hasNextPage = messagesResult.length > limit;
+    const edges = hasNextPage ? messagesResult.slice(0, -1) : messagesResult;
+
+    const nextOffset = hasNextPage ? offset + limit : null;
+
+    return {
+      edges,
+      hasNextPage,
+      nextOffset,
+    };
   }
 }

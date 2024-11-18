@@ -1,10 +1,10 @@
 import { ObjectType, Field, Int } from '@nestjs/graphql';
-import { Comment } from './comment.type';
+import { Message } from './message.type';
 
-@ObjectType({ description: '댓글 페이지네이션 정보' })
-export class CommentConnection {
-  @Field(() => [Comment], { description: '댓글 목록' })
-  edges: Comment[];
+@ObjectType({ description: '메시지 페이지네이션 정보' })
+export class MessageConnection {
+  @Field(() => [Message], { description: '메시지 목록' })
+  edges: Message[];
 
   @Field(() => Boolean, { description: '다음 페이지 여부' })
   hasNextPage: boolean;
