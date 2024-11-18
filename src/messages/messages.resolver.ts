@@ -83,23 +83,22 @@ export class MessagesResolver {
       console.log(
         `구독 중복 방지: ${currentUser.name}은 이미 ${roomId} 방을 구독하고 있습니다.`,
       );
-      return null;
+    } else {
+      subscriptionSet.add(subscriptionKey);
+
+      const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
+
+      asyncIterator.return = () => {
+        subscriptionSet.delete(subscriptionKey);
+
+        console.log(`${currentUser.name} - 구독 종료됨`);
+
+        return Promise.resolve({ done: true, value: undefined });
+      };
+
+      console.log(currentUser.name + ' - 구독 시작');
+
+      return asyncIterator;
     }
-
-    subscriptionSet.add(subscriptionKey);
-
-    const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
-
-    asyncIterator.return = () => {
-      subscriptionSet.delete(subscriptionKey);
-
-      console.log(`${currentUser.name} - 구독 종료됨`);
-
-      return Promise.resolve({ done: true, value: undefined });
-    };
-
-    console.log(currentUser.name + ' - 구독 시작');
-
-    return asyncIterator;
   }
 }
