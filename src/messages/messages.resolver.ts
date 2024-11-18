@@ -69,7 +69,7 @@ export class MessagesResolver {
     @Args('roomId', { type: () => ID }) roomId: string,
     @CurrentUser() currentUser: User,
   ) {
-    const subscriptionKey = `${currentUser.id}-${roomId}`;
+    // const subscriptionKey = `${currentUser.id}-${roomId}`;
 
     const isUserInRoom = this.roomsService.isUserInRoom(roomId, currentUser.id);
 
@@ -79,26 +79,28 @@ export class MessagesResolver {
       throw new ForbiddenException('채팅방에 속해있지 않습니다.');
     }
 
-    if (subscriptionSet.has(subscriptionKey)) {
-      console.log(
-        `구독 중복 방지: ${currentUser.name}은 이미 ${roomId} 방을 구독하고 있습니다.`,
-      );
-    } else {
-      subscriptionSet.add(subscriptionKey);
+    // if (subscriptionSet.has(subscriptionKey)) {
+    //   console.log(
+    //     `구독 중복 방지: ${currentUser.name}은 이미 ${roomId} 방을 구독하고 있습니다.`,
+    //   );
 
-      const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
+    //   return null;
+    // }
 
-      asyncIterator.return = () => {
-        subscriptionSet.delete(subscriptionKey);
+    // subscriptionSet.add(subscriptionKey);
 
-        console.log(`${currentUser.name} - 구독 종료됨`);
+    const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
 
-        return Promise.resolve({ done: true, value: undefined });
-      };
+    asyncIterator.return = () => {
+      // subscriptionSet.delete(subscriptionKey);
 
-      console.log(currentUser.name + ' - 구독 시작');
+      console.log(`${currentUser.name} - 구독 종료됨`);
 
-      return asyncIterator;
-    }
+      return Promise.resolve({ done: true, value: undefined });
+    };
+
+    console.log(currentUser.name + ' - 구독 시작');
+
+    return asyncIterator;
   }
 }
