@@ -71,12 +71,11 @@ export class MessagesResolver {
   ) {
     const subscriptionKey = `${currentUser.id}-${roomId}`;
 
-    console.log(currentUser.name + ' - 구독 시작');
-
     const isUserInRoom = this.roomsService.isUserInRoom(roomId, currentUser.id);
 
     if (!isUserInRoom) {
       console.log(currentUser.name + ' - 채팅방에 속해있지 않습니다.');
+
       throw new ForbiddenException('채팅방에 속해있지 않습니다.');
     }
 
@@ -94,8 +93,12 @@ export class MessagesResolver {
     asyncIterator.return = () => {
       subscriptionSet.delete(subscriptionKey);
 
+      console.log(`${currentUser.name} - 구독 종료됨`);
+
       return Promise.resolve({ done: true, value: undefined });
     };
+
+    console.log(currentUser.name + ' - 구독 시작');
 
     return asyncIterator;
   }

@@ -26,7 +26,7 @@ export class RoomsService {
     }
 
     const [existingRoom] = await this.db
-      .select()
+      .select({ roomId: roomUsers.roomId })
       .from(roomUsers)
       .where(inArray(roomUsers.userId, [userIds[0], userIds[1]]))
       .groupBy(roomUsers.roomId)
