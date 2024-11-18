@@ -90,7 +90,7 @@ export class AuthController {
   }
 
   @Post('refresh')
-  @HttpCode(200)
+  @HttpCode(201)
   @ApiOperation({
     summary: 'JWT 재발급',
     description: '만료된 JWT 액세스 토큰을 새로 발급받습니다.',
