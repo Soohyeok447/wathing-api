@@ -8,11 +8,9 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../data/schema';
 import { rooms } from '../data/schema/room';
 import { roomUsers } from '../data/schema/room_user';
-import { eq, inArray, and, desc } from 'drizzle-orm';
+import { eq, inArray, and, sql } from 'drizzle-orm';
 import { User } from '../users/user.type';
 import { Room } from './room.type';
-import { MessageConnection } from '../messages/types/message_connection.type';
-import { messages } from '../data/schema/message';
 
 @Injectable()
 export class RoomsService {
@@ -25,6 +23,17 @@ export class RoomsService {
       throw new BadRequestException(
         '채팅방은 최소 2명 이상의 사용자로 구성되어야 합니다.',
       );
+    }
+
+    const [existingRoom] = await this.db
+      .select({ roomId: roomUsers.roomId })
+      .from(roomUsers)
+      .where(inArray(roomUsers.userId, [userIds[0], userIds[1]]))
+      .groupBy(roomUsers.roomId)
+      .having(sql`COUNT(*) = 2`);
+
+    if (existingRoom) {
+      throw new BadRequestException('이미 존재하는 채팅방입니다.');
     }
 
     const [newRoom] = await this.db.insert(rooms).values({}).returning();

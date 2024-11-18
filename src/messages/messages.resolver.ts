@@ -51,7 +51,7 @@ export class MessagesResolver {
 
     await pubSub.publish(`onMessage:${roomId}`, { onMessage: message });
 
-    console.log(currentUser.name + ' - 메시지 전송함');
+    console.log(currentUser.name + ' - 메시지 전송함 : ' + content);
 
     return message;
   }
