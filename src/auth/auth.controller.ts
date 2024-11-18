@@ -5,6 +5,7 @@ import {
   Body,
   UnauthorizedException,
   BadRequestException,
+  HttpCode,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
@@ -66,11 +67,13 @@ export class AuthController {
   }
 
   @Post('signin')
+  @HttpCode(200)
   @ApiOperation({
     summary: '유저 로그인',
     description: '유저가 로그인을 통해 액세스 및 리프레시 토큰을 발급받습니다.',
   })
-  @ApiOkResponse({
+  @ApiResponse({
+    status: 200,
     description: '성공적으로 로그인 완료',
     type: AuthResponseDto,
   })
@@ -87,6 +90,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @HttpCode(200)
   @ApiOperation({
     summary: 'JWT 재발급',
     description: '만료된 JWT 액세스 토큰을 새로 발급받습니다.',
