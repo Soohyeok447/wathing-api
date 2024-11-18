@@ -26,14 +26,19 @@ export class RoomsService {
     }
 
     const [existingRoom] = await this.db
-      .select({ roomId: roomUsers.roomId })
+      .select()
       .from(roomUsers)
       .where(inArray(roomUsers.userId, [userIds[0], userIds[1]]))
       .groupBy(roomUsers.roomId)
       .having(sql`COUNT(*) = 2`);
 
     if (existingRoom) {
-      throw new BadRequestException('이미 존재하는 채팅방입니다.');
+      const [room] = await this.db
+        .select()
+        .from(rooms)
+        .where(eq(rooms.id, existingRoom.roomId));
+
+      return room;
     }
 
     const [newRoom] = await this.db.insert(rooms).values({}).returning();
