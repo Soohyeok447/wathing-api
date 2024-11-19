@@ -52,8 +52,6 @@ export class AuthController {
     description: '이미 가입된 사용자',
   })
   async signUp(@Body() body: SignUpDto) {
-    console.log(Body);
-
     const { id, password, name, birthday, profileImageId } = body;
 
     const { accessToken, refreshToken } = await this.authService.signup(
@@ -85,8 +83,6 @@ export class AuthController {
     description: '아이디 또는 비밀번호가 올바르지 않음',
   })
   async signin(@Body() body: SignInDto): Promise<AuthResponseDto> {
-    console.log(Body);
-
     const { id, password } = body;
 
     return this.authService.signin(id, password);
