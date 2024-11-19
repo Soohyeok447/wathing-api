@@ -47,6 +47,23 @@ export class StoryResolver {
     return this.storyService.getStories(limit, offset);
   }
 
+  /**
+   *  @deprecated 사용자의 스토리 목록 조회
+   * TODO : 삭제 예정
+   */
+  @Query(() => StoryConnection, {
+    description: '사용자의 스토리 목록 조회',
+  })
+  async userStories(
+    @Args('userId', { type: () => ID }) userId: string,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 5 })
+    limit: number,
+    @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
+    offset: number,
+  ): Promise<StoryConnection> {
+    return this.storyService.findStoriesByUserId(userId, limit, offset);
+  }
+
   @ResolveField(() => UserEntity, { description: '스토리를 작성한 사용자' })
   async user(@Parent() story: Story): Promise<UserEntity> {
     return await this.usersService.findById(story.userId);
