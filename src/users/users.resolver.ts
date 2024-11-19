@@ -16,12 +16,15 @@ import { File } from '../files/file.type';
 import { CurrentUser } from '../core/decorators/current_user.decorator';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
 import { UseGuards } from '@nestjs/common';
+import { StoryConnection } from '../stories/types/story_connection.type';
+import { StoryService } from '../stories/story.service';
 
 @Resolver(() => User)
 export class UsersResolver {
   constructor(
     private readonly usersService: UsersService,
     private readonly filesService: FilesService,
+    private readonly storyService: StoryService,
   ) {}
 
   @Query(() => User, {
@@ -108,5 +111,19 @@ export class UsersResolver {
   @ResolveField(() => [User], { description: '팔로잉 목록', nullable: true })
   async following(@Parent() user: User): Promise<User[]> {
     return this.usersService.getFollowing(user.id);
+  }
+
+  @ResolveField(() => StoryConnection, {
+    description: '사용자의 스토리 목록',
+    nullable: true,
+  })
+  async stories(
+    @Parent() user: User,
+    @Args('limit', { type: () => Int, nullable: true, defaultValue: 5 })
+    limit: number,
+    @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
+    offset: number,
+  ): Promise<StoryConnection> {
+    return this.storyService.findStoriesByUserId(user.id, limit, offset);
   }
 }
