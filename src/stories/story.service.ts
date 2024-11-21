@@ -10,9 +10,9 @@ import { UsersService } from '../users/users.service';
 import { FilesService } from '../files/files.service';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
-import { comments, stories } from './../data/schema';
+import { comments, stories, storyLikes } from './../data/schema';
 import { storyFiles as storyFilesTable } from './../data/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { isEmptyString } from '../utils/type_gurad';
 import { StoryFile } from './types/story_file.type';
 import { UpdateStoryDto } from './dtos/update_story.dto';
@@ -224,5 +224,67 @@ export class StoryService {
     await this.db.delete(stories).where(eq(stories.id, id));
 
     return true;
+  }
+
+  /**
+   * 스토리에 좋아요를 토글합니다.
+   * @param storyId 스토리 ID
+   * @param userId 사용자 ID
+   * @returns 좋아요 상태 (true: 좋아요 추가, false: 좋아요 취소)
+   */
+  async toggleLikeStory(storyId: string, userId: string): Promise<boolean> {
+    const story = await this.findStoryById(storyId);
+
+    if (!story) {
+      throw new NotFoundException('스토리를 찾을 수 없습니다.');
+    }
+
+    const [existingLike] = await this.db
+      .select()
+      .from(storyLikes)
+      .where(
+        and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)),
+      );
+
+    if (existingLike) {
+      await this.db
+        .delete(storyLikes)
+        .where(
+          and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)),
+        );
+
+      return false; // 좋아요 취소
+    } else {
+      await this.db.insert(storyLikes).values({
+        storyId,
+        userId,
+      });
+
+      return true; // 좋아요 추가
+    }
+  }
+
+  /**
+   * 특정 스토리의 좋아요 개수를 가져옵니다.
+   * @param storyId 스토리 ID
+   */
+  async getLikesCount(storyId: string): Promise<number> {
+    return await this.db.$count(storyLikes, eq(storyLikes.storyId, storyId));
+  }
+
+  /**
+   * 사용자가 특정 스토리에 좋아요를 했는지 확인합니다.
+   * @param storyId 스토리 ID
+   * @param userId 사용자 ID
+   */
+  async hasUserLikedStory(storyId: string, userId: string): Promise<boolean> {
+    const [existingLike] = await this.db
+      .select()
+      .from(storyLikes)
+      .where(
+        and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)),
+      );
+
+    return existingLike ? true : false;
   }
 }

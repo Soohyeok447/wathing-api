@@ -90,6 +90,21 @@ export class StoryResolver {
     return this.storyService.getCommentsCount(story.id);
   }
 
+  @ResolveField(() => Int, { description: '좋아요 개수' })
+  async likesCount(@Parent() story: Story): Promise<number> {
+    return this.storyService.getLikesCount(story.id);
+  }
+
+  @ResolveField(() => Boolean, {
+    description: '현재 사용자가 스토리에 좋아요를 했는지 여부',
+  })
+  async hasLiked(
+    @Parent() story: Story,
+    @Args('userId', { type: () => ID, nullable: true }) userId?: string,
+  ): Promise<boolean> {
+    return this.storyService.hasUserLikedStory(story.id, userId);
+  }
+
   @Mutation(() => Story, { description: '새로운 스토리를 생성.' })
   @UseGuards(GqlAuthGuard)
   async createStory(
@@ -119,5 +134,15 @@ export class StoryResolver {
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
     return this.storyService.deleteStory(currentUser.id, id);
+  }
+
+  @Mutation(() => Boolean, { description: '스토리에 좋아요를 토글합니다.' })
+  @UseGuards(GqlAuthGuard)
+  async toggleLikeStory(
+    @Args('storyId', { type: () => ID, description: '스토리 ID' })
+    storyId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    return this.storyService.toggleLikeStory(storyId, currentUser.id);
   }
 }

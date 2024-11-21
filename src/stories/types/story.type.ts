@@ -18,8 +18,17 @@ export class Story {
   })
   files?: StoryFile[];
 
-  @Field(() => Int, { description: '댓글 개수' })
+  @Field(() => Int, { nullable: true, description: '댓글 개수' })
   commentsCount?: number;
+
+  @Field(() => Int, { nullable: true, description: '좋아요 개수' })
+  likesCount?: number;
+
+  @Field(() => Boolean, {
+    nullable: true,
+    description: '현재 사용자가 스토리에 좋아요를 했는지 여부',
+  })
+  hasLiked?: boolean;
 
   @Field({ description: '스토리 생성일자' })
   createdAt: Date;
