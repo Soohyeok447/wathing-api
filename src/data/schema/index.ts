@@ -4,3 +4,7 @@ export * from './story_file';
 export * from './comment';
 export * from './credential';
 export * from './file';
+export * from './message';
+export * from './room';
+export * from './room_user';
+export * from './follower';

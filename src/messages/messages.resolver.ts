@@ -42,22 +42,30 @@ export class MessagesResolver {
   @UseGuards(GqlAuthGuard)
   async sendMessage(
     @Args('roomId', { type: () => ID }) roomId: string,
+    @Args('receiverId', { type: () => ID }) receiverId: string,
     @Args('content') content: string,
     @CurrentUser() currentUser: User,
   ): Promise<Message> {
     const message = await this.messagesService.sendMessage(
       roomId,
       currentUser.id,
+      receiverId,
       content,
     );
 
-    await pubSub.publish(`onMessage:${roomId}`, { onMessage: message });
+    await pubSub.publish(`onMessages:${receiverId}`, {
+      onMessages: message,
+    });
 
-    console.log(currentUser.name + ' - 메시지 전송함 : ' + content);
+    console.log(`${currentUser.name} - 메시지 전송함 : ${content}`);
 
     return message;
   }
 
+  /**
+   *
+   * @deprecated onMessages로 migration이후 삭제 예정
+   */
   @Subscription(() => Message, {
     name: 'onMessage',
     description: '새로운 메시지 구독',
@@ -91,6 +99,8 @@ export class MessagesResolver {
 
     const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
 
+    console.log(currentUser.name + ' - 구독 시작');
+
     asyncIterator.return = () => {
       // subscriptionSet.delete(subscriptionKey);
 
@@ -99,7 +109,32 @@ export class MessagesResolver {
       return Promise.resolve({ done: true, value: undefined });
     };
 
+    return asyncIterator;
+  }
+
+  @Subscription(() => Message, {
+    name: 'onMessages',
+    description: '본인에게 도착하는 모든 메시지 구독',
+    filter: (payload, variables, context) => {
+      const userId = context.req.user.id;
+
+      return payload.onMessages.receiverId === userId;
+    },
+    resolve: (value) => value.onMessages,
+  })
+  @UseGuards(GqlAuthGuard)
+  onMessages(@CurrentUser() currentUser: User) {
     console.log(currentUser.name + ' - 구독 시작');
+
+    const asyncIterator = pubSub.asyncIterableIterator(
+      `onMessages:${currentUser.id}`,
+    );
+
+    asyncIterator.return = () => {
+      console.log(`${currentUser.name} - 구독 종료됨`);
+
+      return Promise.resolve({ done: true, value: undefined });
+    };
 
     return asyncIterator;
   }
