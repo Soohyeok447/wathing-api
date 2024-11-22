@@ -32,7 +32,7 @@ import { EmojiModule } from './emoji/emoji.module';
     MessagesModule,
     HttpModule,
     TerminusModule,
-    ShortVideoModule,
+    // ShortVideoModule,
     EmojiModule,
   ],
   controllers: [HealthController],
