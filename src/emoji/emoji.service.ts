@@ -120,4 +120,22 @@ export class EmojiService {
   async getEmojiCount(): Promise<number> {
     return await this.db.$count(files, like(files.key, 'emoji/%'));
   }
+
+  async getEmojis(): Promise<{ id: string; key: string }[]> {
+    const emojiFiles = await this.db
+      .select({
+        id: files.id,
+        key: files.key,
+      })
+      .from(files)
+      .where(like(files.key, 'emoji/%'));
+
+    return emojiFiles;
+  }
+
+  async getEmojiById(id: string): Promise<schema.File> {
+    const [emoji] = await this.db.select().from(files).where(eq(files.id, id));
+
+    return emoji;
+  }
 }

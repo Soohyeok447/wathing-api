@@ -9,3 +9,6 @@ export * from './message';
 export * from './room';
 export * from './room_user';
 export * from './follower';
+export * from './follow_request';
+export * from './chat_request';
+export * from './notification';
