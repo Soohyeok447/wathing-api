@@ -7,7 +7,6 @@ import { eq, desc } from 'drizzle-orm';
 import { Message } from './types/message.type';
 import { MessageConnection } from './types/message_connection.type';
 import { RoomsService } from '../rooms/rooms.service';
-import { UsersService } from '../users/users.service';
 import { EmojiService } from '../emoji/emoji.service';
 import { SendMessageDto } from './dtos/send_message.dto';
 
@@ -16,7 +15,6 @@ export class MessagesService {
   constructor(
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
     private readonly roomsService: RoomsService,
-    private readonly usersService: UsersService,
     private readonly emojiService: EmojiService,
   ) {}
 
@@ -37,32 +35,31 @@ export class MessagesService {
       throw new BadRequestException('채팅방에 sender가 속해있지 않습니다.');
     }
 
+    const newMessageData: {
+      roomId: string;
+      senderId: string;
+      content: string;
+      type: string;
+    } = {
+      roomId,
+      senderId,
+      content: '',
+      type,
+    };
+
     switch (type) {
       case 'emoji':
         {
-          const emojiRegex = /^\[emoji:(\d+)\]$/;
-          const match = emojiRegex.exec(content);
-          if (!match) {
-            throw new BadRequestException(
-              '이모지 content 형식이 올바르지 않습니다. 예: [emoji:5], [emoji:10], ...',
-            );
+          const emojiFile = await this.emojiService.getEmojiById(content);
+
+          if (!emojiFile) {
+            throw new BadRequestException(`존재하지 않는 이모티콘 입니다.`);
           }
 
-          const emojiId = parseInt(match[1], 10);
-
-          const emojiCount = await this.emojiService.getEmojiCount();
-
-          if (isNaN(emojiId) || emojiId < 1 || emojiId > emojiCount) {
-            throw new BadRequestException(`잘못된 이모티콘 ID: ${emojiId}`);
-          }
-
-          const emojiExists = await this.emojiService.emojiExists(emojiId);
-
-          if (!emojiExists) {
-            throw new BadRequestException(
-              `존재하지 않는 이모티콘 ID: ${emojiId}`,
-            );
-          }
+          newMessageData.content = JSON.stringify({
+            id: emojiFile.id,
+            key: emojiFile.key,
+          });
         }
         break;
 
@@ -71,6 +68,8 @@ export class MessagesService {
           if (content.length > 500) {
             throw new BadRequestException('메시지 내용이 너무 깁니다.');
           }
+
+          newMessageData.content = content;
         }
         break;
 
@@ -79,13 +78,6 @@ export class MessagesService {
           '메시지 type은 text 또는 emoji 여야 합니다.',
         );
     }
-
-    const newMessageData = {
-      roomId,
-      senderId,
-      content,
-      type,
-    };
 
     const [newMessage] = await this.db
       .insert(messages)

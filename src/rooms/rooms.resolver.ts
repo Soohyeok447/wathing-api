@@ -43,15 +43,33 @@ export class RoomsResolver {
     return this.messagesService.getMessagesByRoomId(room.id, limit, offset);
   }
 
-  @Mutation(() => Room, { description: '채팅방 생성' })
+  @Mutation(() => Boolean, { description: '1:1 채팅 요청 보내기' })
   @UseGuards(GqlAuthGuard)
-  async createRoom(
-    @Args({ name: 'userIds', type: () => [ID] }) userIds: string[],
+  async sendChatRequest(
+    @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser: User,
-  ): Promise<Room> {
-    if (!userIds.includes(currentUser.id)) userIds.push(currentUser.id);
+  ): Promise<boolean> {
+    await this.roomsService.sendChatRequest(currentUser.id, userId);
+    return true;
+  }
 
-    return this.roomsService.createRoom(userIds);
+  @Mutation(() => Boolean, { description: '1:1 채팅 요청 수락' })
+  @UseGuards(GqlAuthGuard)
+  async acceptChatRequest(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    return this.roomsService.acceptChatRequest(currentUser.id, userId);
+  }
+
+  @Mutation(() => Boolean, { description: '1:1 채팅 요청 거절' })
+  @UseGuards(GqlAuthGuard)
+  async rejectChatRequest(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.roomsService.rejectChatRequest(currentUser.id, userId);
+    return true;
   }
 
   @Mutation(() => Boolean, { description: '채팅방 나가기' })

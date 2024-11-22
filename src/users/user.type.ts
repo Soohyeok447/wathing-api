@@ -29,6 +29,12 @@ export class User {
   @Field(() => [User], { description: '팔로잉 목록', nullable: true })
   following?: User[];
 
+  @Field(() => [User], { description: '팔로우 요청 목록', nullable: true })
+  followRequests?: User[];
+
+  @Field(() => [User], { description: '채팅 요청 목록', nullable: true })
+  chatRequests?: User[];
+
   @Field({ description: '생성된 날짜' })
   createdAt: Date;
 

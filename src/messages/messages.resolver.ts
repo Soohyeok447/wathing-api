@@ -9,7 +9,12 @@ import {
 } from '@nestjs/graphql';
 import { MessagesService } from './messages.service';
 import { Message } from './types/message.type';
-import { ForbiddenException, UseGuards } from '@nestjs/common';
+import {
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  UseGuards,
+} from '@nestjs/common';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
 import { CurrentUser } from '../core/decorators/current_user.decorator';
 import { User } from '../users/user.type';
@@ -18,6 +23,7 @@ import { Room } from '../rooms/room.type';
 import { RoomsService } from '../rooms/rooms.service';
 import { UsersService } from '../users/users.service';
 import { SendMessageDto } from './dtos/send_message.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const subscriptionSet = new Set<string>();
 
@@ -25,8 +31,11 @@ const subscriptionSet = new Set<string>();
 export class MessagesResolver {
   constructor(
     private readonly messagesService: MessagesService,
+    @Inject(forwardRef(() => RoomsService))
     private readonly roomsService: RoomsService,
+    @Inject(forwardRef(() => UsersService))
     private readonly usersService: UsersService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   @ResolveField(() => User)
@@ -58,6 +67,13 @@ export class MessagesResolver {
       .map(({ id: receiverId }) => {
         pubSub.publish(`onMessage:${receiverId}`, {
           onMessage: message,
+        });
+
+        // 상대방에게 메시지 알림 생성
+        this.notificationsService.createNotification(receiverId, 'message', {
+          roomId,
+          messageId: message.id,
+          senderId: message.senderId,
         });
       });
 

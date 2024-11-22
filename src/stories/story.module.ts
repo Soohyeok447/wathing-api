@@ -5,9 +5,16 @@ import { UsersModule } from '../users/users.module';
 import { FilesModule } from '../files/files.module';
 import { DatabaseModule } from '../data/database.module';
 import { CommentsModule } from '../comments/comments.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [DatabaseModule, UsersModule, FilesModule, CommentsModule],
+  imports: [
+    DatabaseModule,
+    UsersModule,
+    FilesModule,
+    CommentsModule,
+    NotificationsModule,
+  ],
   providers: [StoryResolver, StoryService],
   exports: [StoryService],
 })

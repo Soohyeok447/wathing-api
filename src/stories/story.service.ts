@@ -17,6 +17,7 @@ import { isEmptyString } from '../utils/type_gurad';
 import { StoryFile } from './types/story_file.type';
 import { UpdateStoryDto } from './dtos/update_story.dto';
 import { StoryConnection } from './types/story_connection.type';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class StoryService {
@@ -24,6 +25,7 @@ export class StoryService {
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
     private readonly usersService: UsersService,
     private readonly filesService: FilesService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async findStoryById(id: string): Promise<Story> {
@@ -163,6 +165,18 @@ export class StoryService {
 
       await this.db.insert(storyFilesTable).values(storyFilesData);
     }
+
+    // 팔로워들에게 알림 생성
+    const followers = await this.usersService.getFollowers(userId);
+
+    await Promise.all(
+      followers.map((follower) =>
+        this.notificationsService.createNotification(follower.id, 'new_post', {
+          userId,
+          storyId: newStory.id,
+        }),
+      ),
+    );
 
     return newStory;
   }

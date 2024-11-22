@@ -12,6 +12,7 @@ import { GraphQLModule } from './core/config/graphql.module';
 import { MessagesModule } from './messages/messages.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { EmojiModule } from './emoji/emoji.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { EmojiModule } from './emoji/emoji.module';
     TerminusModule,
     // ShortVideoModule,
     EmojiModule,
+    NotificationsModule,
   ],
   controllers: [HealthController],
 })

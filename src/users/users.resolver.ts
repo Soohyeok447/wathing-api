@@ -15,9 +15,10 @@ import { FilesService } from '../files/files.service';
 import { File } from '../files/file.type';
 import { CurrentUser } from '../core/decorators/current_user.decorator';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
-import { UseGuards } from '@nestjs/common';
+import { forwardRef, Inject, UseGuards } from '@nestjs/common';
 import { StoryConnection } from '../stories/types/story_connection.type';
 import { StoryService } from '../stories/story.service';
+import { RoomsService } from '../rooms/rooms.service';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -25,6 +26,8 @@ export class UsersResolver {
     private readonly usersService: UsersService,
     private readonly filesService: FilesService,
     private readonly storyService: StoryService,
+    @Inject(forwardRef(() => RoomsService))
+    private readonly roomsService: RoomsService,
   ) {}
 
   @Query(() => User, {
@@ -69,16 +72,43 @@ export class UsersResolver {
     return true;
   }
 
-  @Mutation(() => Boolean, { description: '유저 팔로우' })
+  @Mutation(() => Boolean, { description: '팔로우 요청 보내기' })
   @UseGuards(GqlAuthGuard)
-  async followUser(
-    @Args('userId', { type: () => ID, description: '팔로우할 유저 ID' })
-    userId: string,
+  async sendFollowRequest(
+    @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
-    await this.usersService.followUser(currentUser.id, userId);
+    await this.usersService.sendFollowRequest(currentUser.id, userId);
+    return true;
+  }
+
+  @Mutation(() => Boolean, { description: '팔로우 요청 수락' })
+  @UseGuards(GqlAuthGuard)
+  async acceptFollowRequest(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.usersService.acceptFollowRequest(currentUser.id, userId);
+    return true;
+  }
+
+  @Mutation(() => Boolean, { description: '팔로우 요청 거절' })
+  @UseGuards(GqlAuthGuard)
+  async rejectFollowRequest(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.usersService.rejectFollowRequest(currentUser.id, userId);
 
     return true;
+  }
+
+  @ResolveField(() => [User], {
+    description: '팔로우 요청 목록',
+    nullable: true,
+  })
+  async followRequests(@Parent() user: User): Promise<User[]> {
+    return this.usersService.getPendingFollowRequests(user.id);
   }
 
   @Mutation(() => Boolean, { description: '유저 언팔로우' })
@@ -111,6 +141,11 @@ export class UsersResolver {
   @ResolveField(() => [User], { description: '팔로잉 목록', nullable: true })
   async following(@Parent() user: User): Promise<User[]> {
     return this.usersService.getFollowing(user.id);
+  }
+
+  @ResolveField(() => [User], { description: '채팅 요청 목록', nullable: true })
+  async chatRequests(@Parent() user: User): Promise<User[]> {
+    return this.roomsService.getPendingChatRequests(user.id);
   }
 
   @ResolveField(() => StoryConnection, {

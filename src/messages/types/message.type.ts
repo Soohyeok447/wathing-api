@@ -1,7 +1,6 @@
 import { ObjectType, Field, ID } from '@nestjs/graphql';
 import { User } from '../../users/user.type';
 import { Room } from '../../rooms/room.type';
-import { MessageType } from './message_type.enum';
 
 @ObjectType({ description: '메시지 엔티티' })
 export class Message {
