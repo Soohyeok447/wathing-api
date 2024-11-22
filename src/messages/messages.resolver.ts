@@ -42,19 +42,26 @@ export class MessagesResolver {
   @Mutation(() => Message, { description: '메시지 전송' })
   @UseGuards(GqlAuthGuard)
   async sendMessage(
-    @Args('input') { roomId, receiverId, content, type }: SendMessageDto,
+    @Args('input') { roomId, content, type }: SendMessageDto,
     @CurrentUser() currentUser: User,
   ): Promise<Message> {
     const message = await this.messagesService.sendMessage(currentUser.id, {
       roomId,
-      receiverId,
       content,
       type,
     });
 
-    await pubSub.publish(`onMessages:${receiverId}`, {
-      onMessages: message,
-    });
+    const usersInRoom = await this.roomsService.getUsersInRoom(roomId); // await 추가
+
+    const publishPromises = usersInRoom
+      .filter(({ id }) => id !== currentUser.id)
+      .map(({ id: receiverId }) => {
+        pubSub.publish(`onMessage:${receiverId}`, {
+          onMessage: message,
+        });
+      });
+
+    await Promise.all(publishPromises);
 
     console.log(`${currentUser.name} - 메시지 전송함 : ${content}`);
 
@@ -114,19 +121,14 @@ export class MessagesResolver {
   @Subscription(() => Message, {
     name: 'onMessages',
     description: '본인에게 도착하는 모든 메시지 구독',
-    filter: (payload, variables, context) => {
-      const userId = context.req.user.id;
-
-      return payload.onMessages.receiverId === userId;
-    },
-    resolve: (value) => value.onMessages,
+    resolve: (value) => value.onMessage,
   })
   @UseGuards(GqlAuthGuard)
   onMessages(@CurrentUser() currentUser: User) {
     console.log(currentUser.name + ' - 구독 시작');
 
     const asyncIterator = pubSub.asyncIterableIterator(
-      `onMessages:${currentUser.id}`,
+      `onMessage:${currentUser.id}`,
     );
 
     asyncIterator.return = () => {

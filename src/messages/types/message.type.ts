@@ -18,9 +18,6 @@ export class Message {
 
   senderId: string;
 
-  @Field(() => ID, { nullable: true, description: '메시지 수신자 ID' })
-  receiverId?: string;
-
   @Field({ description: '메시지 내용' })
   content: string;
 

@@ -22,31 +22,19 @@ export class MessagesService {
 
   async sendMessage(
     senderId: string,
-    { roomId, receiverId, content, type }: SendMessageDto,
+    { roomId, content, type }: SendMessageDto,
   ): Promise<Message> {
-    if (!roomId || !receiverId) {
-      throw new BadRequestException('roomId와 receiverId는 필수입니다.');
-    }
-
-    const receiver = await this.usersService.findById(receiverId);
-
-    if (!receiver) {
-      throw new BadRequestException('수신자가 존재하지 않습니다.');
+    if (!roomId) {
+      throw new BadRequestException('roomId는 필수입니다.');
     }
 
     const isSenderInRoom = await this.roomsService.isUserInRoom(
       roomId,
       senderId,
     );
-    const isReceiverInRoom = await this.roomsService.isUserInRoom(
-      roomId,
-      receiverId,
-    );
 
-    if (!isSenderInRoom || !isReceiverInRoom) {
-      throw new BadRequestException(
-        '채팅방에 sender 또는 receiver가 속해있지 않습니다.',
-      );
+    if (!isSenderInRoom) {
+      throw new BadRequestException('채팅방에 sender가 속해있지 않습니다.');
     }
 
     switch (type) {
@@ -95,7 +83,6 @@ export class MessagesService {
     const newMessageData = {
       roomId,
       senderId,
-      receiverId,
       content,
       type,
     };

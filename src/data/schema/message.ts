@@ -11,11 +11,6 @@ export const messages = pgTable('messages', {
   senderId: uuid('sender_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  receiverId: uuid('receiver_id')
-    .notNull()
-    .references(() => users.id, {
-      onDelete: 'cascade',
-    }),
   content: text('content').notNull(),
   type: text('type').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),

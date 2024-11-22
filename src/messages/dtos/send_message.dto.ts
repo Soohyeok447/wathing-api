@@ -11,11 +11,6 @@ export class SendMessageDto {
   })
   roomId: string;
 
-  @Field(() => ID, {
-    description: '메시지 수신자 ID',
-  })
-  receiverId: string;
-
   @Field(() => MessageType, {
     description: '메시지 타입 (text, emoji)',
   })
