@@ -17,6 +17,7 @@ import { pubSub } from '../core/config/pubsub';
 import { Room } from '../rooms/room.type';
 import { RoomsService } from '../rooms/rooms.service';
 import { UsersService } from '../users/users.service';
+import { SendMessageDto } from './dtos/send_message.dto';
 
 const subscriptionSet = new Set<string>();
 
@@ -41,17 +42,15 @@ export class MessagesResolver {
   @Mutation(() => Message, { description: '메시지 전송' })
   @UseGuards(GqlAuthGuard)
   async sendMessage(
-    @Args('roomId', { type: () => ID }) roomId: string,
-    @Args('receiverId', { type: () => ID }) receiverId: string,
-    @Args('content') content: string,
+    @Args('input') { roomId, receiverId, content, type }: SendMessageDto,
     @CurrentUser() currentUser: User,
   ): Promise<Message> {
-    const message = await this.messagesService.sendMessage(
+    const message = await this.messagesService.sendMessage(currentUser.id, {
       roomId,
-      currentUser.id,
       receiverId,
       content,
-    );
+      type,
+    });
 
     await pubSub.publish(`onMessages:${receiverId}`, {
       onMessages: message,

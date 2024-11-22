@@ -105,4 +105,19 @@ export class EmojiService {
 
     return sortedEmojiKeys;
   }
+
+  async emojiExists(emoticonId: number): Promise<boolean> {
+    const key = `emoji/${emoticonId}.png`;
+
+    const [emoji] = await this.db
+      .select()
+      .from(files)
+      .where(eq(files.key, key));
+
+    return !!emoji;
+  }
+
+  async getEmojiCount(): Promise<number> {
+    return await this.db.$count(files, like(files.key, 'emoji/%'));
+  }
 }

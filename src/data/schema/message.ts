@@ -17,6 +17,7 @@ export const messages = pgTable('messages', {
       onDelete: 'cascade',
     }),
   content: text('content').notNull(),
+  type: text('type').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

@@ -1,6 +1,5 @@
 import {
   Controller,
-  Get,
   Post,
   UploadedFile,
   UploadedFiles,
@@ -15,7 +14,6 @@ import { File } from '../data/schema';
 @Controller('emoji')
 export class EmojiController {
   constructor(private readonly emojiService: EmojiService) {}
-
   @Post('upload')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
@@ -31,11 +29,5 @@ export class EmojiController {
   @UseInterceptors(FilesInterceptor('files'))
   async uploadEmojis(@UploadedFiles() files: Express.Multer.File[]) {
     return await this.emojiService.uploadEmojis(files);
-  }
-
-  @Get()
-  @UseGuards(JwtAuthGuard)
-  async getEmojiKeys() {
-    return await this.emojiService.getEmojiKeys();
   }
 }
