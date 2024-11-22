@@ -8,7 +8,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../data/schema';
 import { rooms } from '../data/schema/room';
 import { roomUsers } from '../data/schema/room_user';
-import { eq, inArray, and, sql, or } from 'drizzle-orm';
+import { eq, inArray, and, sql } from 'drizzle-orm';
 import { User } from '../users/user.type';
 import { Room } from './room.type';
 import { chatRequests } from '../data/schema/chat_request';

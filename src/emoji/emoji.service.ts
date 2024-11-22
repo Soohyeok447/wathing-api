@@ -4,7 +4,7 @@ import * as AWS from 'aws-sdk';
 import { files, NewFile } from '../data/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../data/schema';
-import { eq, inArray, like } from 'drizzle-orm';
+import { eq, like } from 'drizzle-orm';
 
 @Injectable()
 export class EmojiService {
