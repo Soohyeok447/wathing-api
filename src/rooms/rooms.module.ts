@@ -7,8 +7,8 @@ import { MessagesService } from '../messages/messages.service';
 import { EmojiModule } from '../emoji/emoji.module';
 
 @Module({
-  imports: [UsersModule, DatabaseModule, RoomsModule, EmojiModule],
-  providers: [RoomsService, MessagesService],
+  imports: [UsersModule, DatabaseModule, EmojiModule],
+  providers: [RoomsService, RoomsResolver, MessagesService],
   exports: [RoomsService],
 })
 export class RoomsModule {}
