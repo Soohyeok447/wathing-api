@@ -11,7 +11,6 @@ import { CommentsModule } from './comments/comments.module';
 import { GraphQLModule } from './core/config/graphql.module';
 import { MessagesModule } from './messages/messages.module';
 import { RoomsModule } from './rooms/rooms.module';
-import { ShortVideoModule } from './short_videos/short_videos.module';
 import { EmojiModule } from './emoji/emoji.module';
 
 @Module({
