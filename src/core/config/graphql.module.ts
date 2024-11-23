@@ -26,10 +26,16 @@ import { join } from 'path';
             req: {
               headers: extra.connectionParams,
             },
+            subscriptionMap: new Map<string, AsyncIterator<any>>(),
           };
         } else if (connectionParams) {
           // 구 버전 WebSocket 요청인 경우 (`subscriptions-transport-ws` 사용 시)
-          return { req: { headers: connectionParams } };
+          return {
+            req: {
+              headers: connectionParams,
+            },
+            subscriptionMap: new Map<string, AsyncIterator<any>>(),
+          };
         }
       },
     }),

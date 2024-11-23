@@ -2,7 +2,6 @@ import {
   Resolver,
   Mutation,
   Args,
-  ID,
   Subscription,
   ResolveField,
   Parent,
@@ -11,7 +10,7 @@ import {
 import { MessagesService } from './messages.service';
 import { Message } from './types/message.type';
 import {
-  ForbiddenException,
+  BadRequestException,
   forwardRef,
   Inject,
   UseGuards,
@@ -88,17 +87,49 @@ export class MessagesResolver {
   })
   @UseGuards(GqlAuthGuard)
   onMessages(@CurrentUser() currentUser: User, @Context() context) {
+    const subscriptionKey = 'onMessages';
+
+    const subscriptionMap: Map<
+      string,
+      AsyncIterator<any>
+    > = context.subscriptionMap;
+
+    if (!subscriptionMap) {
+      throw new BadRequestException(
+        '구독 상태를 저장할 subscriptionMap이 없습니다.',
+      );
+    }
+
+    if (subscriptionMap.has(subscriptionKey)) {
+      console.log(
+        `구독 중복 방지: ${currentUser.name}은 이미 onMessages를 구독하고 있습니다.`,
+      );
+
+      // 기존의 AsyncIterator를 반환합니다.
+      return subscriptionMap.get(subscriptionKey);
+    }
+
     console.log(currentUser.name + ' - onMessages 구독 시작');
 
     const asyncIterator = pubSub.asyncIterableIterator(
       `onMessage:${currentUser.id}`,
     );
 
+    const originalReturn = asyncIterator.return;
+
     asyncIterator.return = () => {
       console.log(`${currentUser.name} - onMessages 구독 종료됨`);
 
+      subscriptionMap.delete(subscriptionKey);
+
+      if (originalReturn) {
+        return originalReturn.call(asyncIterator);
+      }
+
       return Promise.resolve({ done: true, value: undefined });
     };
+
+    subscriptionMap.set(subscriptionKey, asyncIterator);
 
     return asyncIterator;
   }
