@@ -60,22 +60,20 @@ export class MessagesResolver {
       type,
     });
 
-    const usersInRoom = await this.roomsService.getUsersInRoom(roomId); // await 추가
+    const usersInRoom = await this.roomsService.getUsersInRoom(roomId);
 
-    const publishPromises = usersInRoom
-      .filter(({ id }) => id !== currentUser.id)
-      .map(({ id: receiverId }) => {
-        pubSub.publish(`onMessage:${receiverId}`, {
-          onMessage: message,
-        });
-
-        // 상대방에게 메시지 알림 생성
-        this.notificationsService.createNotification(receiverId, 'message', {
-          roomId,
-          messageId: message.id,
-          senderId: message.senderId,
-        });
+    const publishPromises = usersInRoom.map(({ id: receiverId }) => {
+      pubSub.publish(`onMessage:${receiverId}`, {
+        onMessage: message,
       });
+
+      // 상대방에게 메시지 알림 생성
+      this.notificationsService.createNotification(receiverId, 'message', {
+        roomId,
+        messageId: message.id,
+        senderId: message.senderId,
+      });
+    });
 
     await Promise.all(publishPromises);
 
@@ -121,12 +119,15 @@ export class MessagesResolver {
 
     const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
 
-    console.log(currentUser.name + ' - 구독 시작');
+    console.log(
+      currentUser.name +
+        ' - onMessage 구독 시작했습니다. onMessage는 deprecated 될 예정입니다.',
+    );
 
     asyncIterator.return = () => {
       // subscriptionSet.delete(subscriptionKey);
 
-      console.log(`${currentUser.name} - 구독 종료됨`);
+      console.log(`${currentUser.name} - onMessage 구독 종료됨`);
 
       return Promise.resolve({ done: true, value: undefined });
     };
@@ -141,14 +142,14 @@ export class MessagesResolver {
   })
   @UseGuards(GqlAuthGuard)
   onMessages(@CurrentUser() currentUser: User) {
-    console.log(currentUser.name + ' - 구독 시작');
+    console.log(currentUser.name + ' - onMessages 구독 시작');
 
     const asyncIterator = pubSub.asyncIterableIterator(
       `onMessage:${currentUser.id}`,
     );
 
     asyncIterator.return = () => {
-      console.log(`${currentUser.name} - 구독 종료됨`);
+      console.log(`${currentUser.name} - onMessages 구독 종료됨`);
 
       return Promise.resolve({ done: true, value: undefined });
     };
