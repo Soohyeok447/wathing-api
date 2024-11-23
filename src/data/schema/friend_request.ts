@@ -1,8 +1,8 @@
 import { pgTable, uuid, timestamp, primaryKey } from 'drizzle-orm/pg-core';
 import { users } from '.';
 
-export const followRequests = pgTable(
-  'follow_requests',
+export const friendRequests = pgTable(
+  'friend_requests',
   {
     requesterId: uuid('requester_id')
       .notNull()

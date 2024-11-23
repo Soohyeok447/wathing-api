@@ -19,7 +19,7 @@ export class NotificationsService {
     if (
       type !== 'new_post' &&
       type !== 'chat_request' &&
-      type !== 'follow_request' &&
+      type !== 'friend_request' &&
       type !== 'message'
     ) {
       throw new BadRequestException('지원하지 않는 알림 타입입니다.');

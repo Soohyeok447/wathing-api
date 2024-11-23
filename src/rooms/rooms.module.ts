@@ -2,13 +2,23 @@ import { Module } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 import { RoomsResolver } from './rooms.resolver';
 import { DatabaseModule } from '../data/database.module';
-import { EmojiModule } from '../emoji/emoji.module';
-import { NotificationsModule } from '../notifications/notifications.module';
-import { MessagesModule } from '../messages/messages.module';
+import { UsersService } from '../users/users.service';
+import { FilesService } from '../files/files.service';
+import { EmojiService } from '../emoji/emoji.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { MessagesService } from '../messages/messages.service';
 
 @Module({
-  imports: [DatabaseModule, EmojiModule, NotificationsModule, MessagesModule],
-  providers: [RoomsService, RoomsResolver],
+  imports: [DatabaseModule],
+  providers: [
+    RoomsService,
+    RoomsResolver,
+    UsersService,
+    FilesService,
+    EmojiService,
+    NotificationsService,
+    MessagesService,
+  ],
   exports: [RoomsService],
 })
 export class RoomsModule {}

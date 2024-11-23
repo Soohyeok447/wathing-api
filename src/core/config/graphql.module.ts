@@ -12,6 +12,7 @@ import { join } from 'path';
       playground: true,
       introspection: true,
       installSubscriptionHandlers: true,
+      fieldResolverEnhancers: ['guards'],
       subscriptions: {
         'graphql-ws': true,
       },
@@ -21,7 +22,11 @@ import { join } from 'path';
           return { req };
         } else if (extra && extra.connectionParams) {
           // WebSocket 요청인 경우 (`graphql-ws` 사용 시)
-          return { req: { headers: extra.connectionParams } };
+          return {
+            req: {
+              headers: extra.connectionParams,
+            },
+          };
         } else if (connectionParams) {
           // 구 버전 WebSocket 요청인 경우 (`subscriptions-transport-ws` 사용 시)
           return { req: { headers: connectionParams } };

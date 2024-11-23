@@ -1,4 +1,11 @@
-import { Resolver, Query, Mutation, Args, Subscription } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  Subscription,
+  Context,
+} from '@nestjs/graphql';
 import { NotificationsService } from './notifications.service';
 import { Notification } from './notification.type';
 import { CurrentUser } from '../core/decorators/current_user.decorator';
@@ -6,6 +13,8 @@ import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
 import { User } from '../data/schema';
 import { pubSub } from '../core/config/pubsub';
+
+const notificationSubscriptionSet = new Set<string>();
 
 @Resolver(() => Notification)
 export class NotificationsResolver {
@@ -33,7 +42,7 @@ export class NotificationsResolver {
     resolve: (payload) => payload.notification,
   })
   @UseGuards(GqlAuthGuard)
-  onNotifications(@CurrentUser() currentUser: User) {
+  onNotifications(@CurrentUser() currentUser: User, @Context() context) {
     console.log(currentUser.name + ' - onNotifications 구독 시작');
 
     const asyncIterator = pubSub.asyncIterableIterator(`onNotifications`);

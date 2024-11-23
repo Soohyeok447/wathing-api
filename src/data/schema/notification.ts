@@ -7,7 +7,7 @@ export const notifications = pgTable('notifications', {
   userId: uuid('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  type: text('type').notNull(), // 'new_post', 'chat_request', 'message', 'follow_request'
+  type: text('type').notNull(),
   data: text('data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   read: boolean('read').default(false).notNull(),

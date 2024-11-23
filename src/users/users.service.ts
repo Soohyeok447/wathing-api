@@ -5,15 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { User, users } from '../data/schema';
+import { subscriptions, User, users } from '../data/schema';
 import * as schema from '../data/schema';
-import { eq, inArray, and } from 'drizzle-orm';
+import { eq, inArray, and, or } from 'drizzle-orm';
 import { isDateString, isEmptyString } from '../utils/type_gurad';
 import { UpdateUserDto } from './dtos/update_user.dto';
 import { FilesService } from '../files/files.service';
 import { User as UserEntity } from '../users/user.type';
-import { followers } from '../data/schema/follower';
-import { followRequests } from '../data/schema/follow_request';
+import { friends } from '../data/schema/friend';
+import { friendRequests } from '../data/schema/friend_request';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -41,50 +41,58 @@ export class UsersService {
   }
 
   /**
-   * 팔로우 요청을 보냅니다.
+   * 친구 요청을 보냅니다.
    */
-  async sendFollowRequest(userId: string, targetId: string): Promise<void> {
+  async sendFriendRequest(userId: string, targetId: string): Promise<void> {
     if (userId === targetId) {
-      throw new BadRequestException('자기 자신을 팔로우할 수 없습니다.');
+      throw new BadRequestException(
+        '자기 자신에게 친구 요청을 보낼 수 없습니다.',
+      );
     }
 
     const targetUser = await this.findById(targetId);
 
     if (!targetUser) {
-      throw new NotFoundException('팔로우할 유저를 찾을 수 없습니다.');
+      throw new NotFoundException('친구 요청할 유저를 찾을 수 없습니다.');
     }
 
-    // 이미 팔로우 중인지 확인
-    const [existingFollow] = await this.db
-      .select()
-      .from(followers)
-      .where(
-        and(
-          eq(followers.followerId, userId),
-          eq(followers.followingId, targetId),
-        ),
-      );
+    // 이미 친구인지 확인
+    const isAlreadyFriend = await this.checkIfFriends(userId, targetId);
 
-    if (existingFollow) {
-      throw new BadRequestException('이미 팔로우 중입니다.');
+    if (isAlreadyFriend) {
+      throw new BadRequestException('이미 친구입니다.');
     }
 
-    // 이미 팔로우 요청이 있는지 확인
+    // 이미 친구 요청이 있는지 확인
     const [existingRequest] = await this.db
       .select()
-      .from(followRequests)
+      .from(friendRequests)
       .where(
-        and(
-          eq(followRequests.requesterId, userId),
-          eq(followRequests.targetId, targetId),
+        or(
+          and(
+            eq(friendRequests.requesterId, userId),
+            eq(friendRequests.targetId, targetId),
+          ),
+          and(
+            eq(friendRequests.requesterId, targetId),
+            eq(friendRequests.targetId, userId),
+          ),
         ),
       );
 
     if (existingRequest) {
-      throw new BadRequestException('이미 팔로우 요청을 보냈습니다.');
+      // 상대방이 나에게 친구 요청을 보냈다면, 친구 관계를 맺음
+      if (existingRequest.requesterId === targetId) {
+        await this.acceptFriendRequest(userId, targetId);
+
+        return;
+      }
+
+      throw new BadRequestException('이미 친구 요청을 보냈습니다.');
     }
 
-    await this.db.insert(followRequests).values({
+    // 친구 요청 생성
+    await this.db.insert(friendRequests).values({
       requesterId: userId,
       targetId,
     });
@@ -92,7 +100,7 @@ export class UsersService {
     // 상대방에게 알림 생성
     await this.notificationsService.createNotification(
       targetId,
-      'follow_request',
+      'friend_request',
       {
         requesterId: userId,
       },
@@ -100,82 +108,162 @@ export class UsersService {
   }
 
   /**
-   * 팔로우 요청 수락
+   * 친구 요청 수락
    */
-  async acceptFollowRequest(
-    targetId: string,
+  async acceptFriendRequest(
+    userId: string,
     requesterId: string,
   ): Promise<void> {
-    const [followRequest] = await this.db
+    const [friendRequest] = await this.db
       .select()
-      .from(followRequests)
+      .from(friendRequests)
       .where(
         and(
-          eq(followRequests.requesterId, requesterId),
-          eq(followRequests.targetId, targetId),
+          eq(friendRequests.requesterId, requesterId),
+          eq(friendRequests.targetId, userId),
         ),
       );
 
-    if (!followRequest) {
-      throw new BadRequestException('팔로우 요청이 존재하지 않습니다.');
+    if (!friendRequest) {
+      throw new BadRequestException('친구 요청이 존재하지 않습니다.');
     }
 
     await this.db.transaction(async (tx) => {
-      await tx.insert(followers).values({
-        followerId: requesterId,
-        followingId: targetId,
+      await tx.insert(friends).values({
+        userId1: userId,
+        userId2: requesterId,
       });
 
       await tx
-        .delete(followRequests)
+        .delete(friendRequests)
         .where(
           and(
-            eq(followRequests.requesterId, requesterId),
-            eq(followRequests.targetId, targetId),
+            eq(friendRequests.requesterId, requesterId),
+            eq(friendRequests.targetId, userId),
           ),
         );
     });
   }
 
   /**
-   * 팔로우 요청 거절
+   * 친구 요청 거절
    */
-  async rejectFollowRequest(
-    targetId: string,
+  async rejectFriendRequest(
+    userId: string,
     requesterId: string,
   ): Promise<void> {
-    const [followRequest] = await this.db
+    const [friendRequest] = await this.db
       .select()
-      .from(followRequests)
+      .from(friendRequests)
       .where(
         and(
-          eq(followRequests.requesterId, requesterId),
-          eq(followRequests.targetId, targetId),
+          eq(friendRequests.requesterId, requesterId),
+          eq(friendRequests.targetId, userId),
         ),
       );
 
-    if (!followRequest) {
-      throw new BadRequestException('팔로우 요청이 존재하지 않습니다.');
+    if (!friendRequest) {
+      throw new BadRequestException('친구 요청이 존재하지 않습니다.');
     }
 
     await this.db
-      .delete(followRequests)
+      .delete(friendRequests)
       .where(
         and(
-          eq(followRequests.requesterId, requesterId),
-          eq(followRequests.targetId, targetId),
+          eq(friendRequests.requesterId, requesterId),
+          eq(friendRequests.targetId, userId),
         ),
       );
   }
 
   /**
-   * 팔로우 요청 목록 가져오기
-   * */
-  async getPendingFollowRequests(targetId: string): Promise<User[]> {
+   * 친구 삭제 (친구 끊기)
+   */
+  async unfriendUser(userId: string, targetId: string): Promise<void> {
+    const [existingFriend] = await this.db
+      .select()
+      .from(friends)
+      .where(
+        or(
+          and(eq(friends.userId1, userId), eq(friends.userId2, targetId)),
+          and(eq(friends.userId1, targetId), eq(friends.userId2, userId)),
+        ),
+      );
+
+    if (!existingFriend) {
+      throw new BadRequestException('친구 관계가 존재하지 않습니다.');
+    }
+
+    await this.db
+      .delete(friends)
+      .where(
+        or(
+          and(eq(friends.userId1, userId), eq(friends.userId2, targetId)),
+          and(eq(friends.userId1, targetId), eq(friends.userId2, userId)),
+        ),
+      );
+  }
+
+  /**
+   * 두 유저가 친구인지 확인
+   */
+  async checkIfFriends(userId1: string, userId2: string): Promise<boolean> {
+    const [existingFriend] = await this.db
+      .select()
+      .from(friends)
+      .where(
+        or(
+          and(eq(friends.userId1, userId1), eq(friends.userId2, userId2)),
+          and(eq(friends.userId1, userId2), eq(friends.userId2, userId1)),
+        ),
+      );
+
+    return !!existingFriend;
+  }
+
+  /**
+   * 친구 수 가져오기
+   */
+  async getFriendsCount(userId: string): Promise<number> {
+    return await this.db.$count(
+      friends,
+      or(eq(friends.userId1, userId), eq(friends.userId2, userId)),
+    );
+  }
+
+  /**
+   * 친구 목록 가져오기
+   */
+  async getFriends(userId: string): Promise<User[]> {
+    const friendRelations = await this.db
+      .select()
+      .from(friends)
+      .where(or(eq(friends.userId1, userId), eq(friends.userId2, userId)));
+
+    const friendIds = friendRelations.map((rel) =>
+      rel.userId1 === userId ? rel.userId2 : rel.userId1,
+    );
+
+    if (friendIds.length === 0) {
+      return [];
+    }
+
+    const friendsList = await this.db
+      .select()
+      .from(users)
+      .where(inArray(users.id, friendIds));
+
+    return friendsList;
+  }
+
+  /**
+   * 사용자가 받은 친구 요청 목록 가져오기
+   */
+  async getFriendRequests(userId: string): Promise<User[]> {
     const requests = await this.db
-      .select({ requesterId: followRequests.requesterId })
-      .from(followRequests)
-      .where(eq(followRequests.targetId, targetId));
+      .select({ requesterId: friendRequests.requesterId })
+      .from(friendRequests)
+      .where(eq(friendRequests.targetId, userId));
 
     const requesterIds = requests.map((req) => req.requesterId);
 
@@ -189,83 +277,6 @@ export class UsersService {
       .where(inArray(users.id, requesterIds));
 
     return usersList;
-  }
-
-  async unfollowUser(userId: string, unfollowingId: string): Promise<void> {
-    if (userId === unfollowingId) {
-      throw new BadRequestException('자기 자신을 언팔로우할 수 없습니다.');
-    }
-
-    const [existingFollow] = await this.db
-      .select()
-      .from(followers)
-      .where(
-        and(
-          eq(followers.followerId, userId),
-          eq(followers.followingId, unfollowingId),
-        ),
-      );
-
-    if (!existingFollow) {
-      throw new BadRequestException('팔로우 관계가 존재하지 않습니다.');
-    }
-
-    await this.db
-      .delete(followers)
-      .where(
-        and(
-          eq(followers.followerId, userId),
-          eq(followers.followingId, unfollowingId),
-        ),
-      );
-  }
-
-  async getFollowersCount(userId: string): Promise<number> {
-    return await this.db.$count(followers, eq(followers.followingId, userId));
-  }
-
-  async getFollowingCount(userId: string): Promise<number> {
-    return await this.db.$count(followers, eq(followers.followerId, userId));
-  }
-
-  async getFollowers(userId: string): Promise<User[]> {
-    const followerRelations = await this.db
-      .select()
-      .from(followers)
-      .where(eq(followers.followingId, userId));
-
-    const followerIds = followerRelations.map((rel) => rel.followerId);
-
-    if (followerIds.length === 0) {
-      return [];
-    }
-
-    const followersList = await this.db
-      .select()
-      .from(users)
-      .where(inArray(users.id, followerIds));
-
-    return followersList;
-  }
-
-  async getFollowing(userId: string): Promise<User[]> {
-    const followingRelations = await this.db
-      .select()
-      .from(followers)
-      .where(eq(followers.followerId, userId));
-
-    const followingIds = followingRelations.map((rel) => rel.followingId);
-
-    if (followingIds.length === 0) {
-      return [];
-    }
-
-    const followingList = await this.db
-      .select()
-      .from(users)
-      .where(inArray(users.id, followingIds));
-
-    return followingList;
   }
 
   async updateUser(
@@ -319,5 +330,128 @@ export class UsersService {
     }
 
     await this.db.delete(users).where(eq(users.id, id));
+  }
+
+  /**
+   * 사용자 구독하기
+   */
+  async subscribeUser(userId: string, targetId: string): Promise<void> {
+    if (userId === targetId) {
+      throw new BadRequestException('자기 자신을 구독할 수 없습니다.');
+    }
+
+    // 이미 구독 중인지 확인
+    const [existingSubscription] = await this.db
+      .select()
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.subscriberId, userId),
+          eq(subscriptions.targetId, targetId),
+        ),
+      );
+
+    if (existingSubscription) {
+      throw new BadRequestException('이미 구독 중입니다.');
+    }
+
+    await this.db.insert(subscriptions).values({
+      subscriberId: userId,
+      targetId,
+    });
+  }
+
+  /**
+   * 구독 취소하기
+   */
+  async unsubscribeUser(userId: string, targetId: string): Promise<void> {
+    const [existingSubscription] = await this.db
+      .select()
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.subscriberId, userId),
+          eq(subscriptions.targetId, targetId),
+        ),
+      );
+
+    if (!existingSubscription) {
+      throw new BadRequestException('구독 중이 아닙니다.');
+    }
+
+    await this.db
+      .delete(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.subscriberId, userId),
+          eq(subscriptions.targetId, targetId),
+        ),
+      );
+  }
+
+  /**
+   * 사용자의 구독 목록 가져오기
+   */
+  async getSubscriptions(userId: string): Promise<User[]> {
+    const subscriptionRelations = await this.db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.subscriberId, userId));
+
+    const targetIds = subscriptionRelations.map((rel) => rel.targetId);
+
+    if (targetIds.length === 0) {
+      return [];
+    }
+
+    const subscriptionsList = await this.db
+      .select()
+      .from(users)
+      .where(inArray(users.id, targetIds));
+
+    return subscriptionsList;
+  }
+
+  /**
+   * 특정 사용자를 구독하는 사용자 목록 가져오기
+   */
+  async getSubscribers(userId: string): Promise<User[]> {
+    const subscriptionRelations = await this.db
+      .select()
+      .from(subscriptions)
+      .where(eq(subscriptions.targetId, userId));
+
+    const subscriberIds = subscriptionRelations.map((rel) => rel.subscriberId);
+
+    if (subscriberIds.length === 0) {
+      return [];
+    }
+
+    const subscribersList = await this.db
+      .select()
+      .from(users)
+      .where(inArray(users.id, subscriberIds));
+
+    return subscribersList;
+  }
+
+  /**
+   * 구독 수 가져오기
+   */
+  async getSubscriptionsCount(userId: string): Promise<number> {
+    return await this.db.$count(
+      subscriptions,
+      eq(subscriptions.subscriberId, userId),
+    );
+  }
+
+  /**
+   * 구독자 수 가져오기
+   */
+  async getSubscribersCount(userId: string): Promise<number> {
+    return await this.db.$count(
+      subscriptions,
+      eq(subscriptions.targetId, userId),
+    );
   }
 }

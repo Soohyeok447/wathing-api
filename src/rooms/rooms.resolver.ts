@@ -43,33 +43,13 @@ export class RoomsResolver {
     return this.messagesService.getMessagesByRoomId(room.id, limit, offset);
   }
 
-  @Mutation(() => Boolean, { description: '1:1 채팅 요청 보내기' })
+  @Mutation(() => Room, { description: '채팅방 생성' })
   @UseGuards(GqlAuthGuard)
-  async sendChatRequest(
+  async createRoom(
     @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser: User,
-  ): Promise<boolean> {
-    await this.roomsService.sendChatRequest(currentUser.id, userId);
-    return true;
-  }
-
-  @Mutation(() => Boolean, { description: '1:1 채팅 요청 수락' })
-  @UseGuards(GqlAuthGuard)
-  async acceptChatRequest(
-    @Args('userId', { type: () => ID }) userId: string,
-    @CurrentUser() currentUser: User,
-  ): Promise<boolean> {
-    return this.roomsService.acceptChatRequest(currentUser.id, userId);
-  }
-
-  @Mutation(() => Boolean, { description: '1:1 채팅 요청 거절' })
-  @UseGuards(GqlAuthGuard)
-  async rejectChatRequest(
-    @Args('userId', { type: () => ID }) userId: string,
-    @CurrentUser() currentUser: User,
-  ): Promise<boolean> {
-    await this.roomsService.rejectChatRequest(currentUser.id, userId);
-    return true;
+  ): Promise<Room> {
+    return this.roomsService.createRoomBetweenFriends(currentUser.id, userId);
   }
 
   @Mutation(() => Boolean, { description: '채팅방 나가기' })

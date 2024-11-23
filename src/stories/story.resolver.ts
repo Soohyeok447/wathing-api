@@ -96,13 +96,14 @@ export class StoryResolver {
   }
 
   @ResolveField(() => Boolean, {
-    description: '현재 사용자가 스토리에 좋아요를 했는지 여부',
+    description: '사용자가 해당 스토리에 좋아요를 눌렀는지 여부',
   })
+  @UseGuards(GqlAuthGuard)
   async hasLiked(
     @Parent() story: Story,
-    @Args('userId', { type: () => ID, nullable: true }) userId?: string,
+    @CurrentUser() currentUser: User,
   ): Promise<boolean> {
-    return this.storyService.hasUserLikedStory(story.id, userId);
+    return this.storyService.hasLikedStory(story.id, currentUser.id);
   }
 
   @Mutation(() => Story, { description: '새로운 스토리를 생성.' })
@@ -136,13 +137,23 @@ export class StoryResolver {
     return this.storyService.deleteStory(currentUser.id, id);
   }
 
-  @Mutation(() => Boolean, { description: '스토리에 좋아요를 토글합니다.' })
+  @Mutation(() => Boolean, { description: '스토리에 좋아요 누르기' })
   @UseGuards(GqlAuthGuard)
-  async toggleLikeStory(
-    @Args('storyId', { type: () => ID, description: '스토리 ID' })
-    storyId: string,
+  async likeStory(
+    @Args('storyId', { type: () => ID }) storyId: string,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
-    return this.storyService.toggleLikeStory(storyId, currentUser.id);
+    await this.storyService.likeStory(storyId, currentUser.id);
+    return true;
+  }
+
+  @Mutation(() => Boolean, { description: '스토리에 좋아요 취소하기' })
+  @UseGuards(GqlAuthGuard)
+  async dislikeStory(
+    @Args('storyId', { type: () => ID }) storyId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.storyService.dislikeStory(storyId, currentUser.id);
+    return true;
   }
 }

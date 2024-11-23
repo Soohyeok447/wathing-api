@@ -11,152 +11,52 @@ import { roomUsers } from '../data/schema/room_user';
 import { eq, inArray, and, sql } from 'drizzle-orm';
 import { User } from '../users/user.type';
 import { Room } from './room.type';
-import { chatRequests } from '../data/schema/chat_request';
 import { NotificationsService } from '../notifications/notifications.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class RoomsService {
   constructor(
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
     private readonly notificationsService: NotificationsService,
+    private readonly usersService: UsersService,
   ) {}
 
   /**
-   * 채팅 요청 보내기
+   * 친구 간의 채팅방 생성
    */
-  async sendChatRequest(requesterId: string, targetId: string): Promise<void> {
-    if (requesterId === targetId) {
+  async createRoomBetweenFriends(
+    userId1: string,
+    userId2: string,
+  ): Promise<Room> {
+    if (userId1 === userId2) {
+      throw new BadRequestException('자기 자신과의 채팅방을 만들 수 없습니다.');
+    }
+
+    // 두 유저가 친구인지 확인
+    const areFriends = await this.usersService.checkIfFriends(userId1, userId2);
+    if (!areFriends) {
       throw new BadRequestException(
-        '자기 자신에게 채팅 요청을 보낼 수 없습니다.',
+        '친구가 아니면 채팅방을 생성할 수 없습니다.',
       );
     }
 
-    const existingRoom = await this.getExistingRoom([requesterId, targetId]);
-
+    // 이미 채팅방이 있으면 해당 채팅방을 반환
+    const existingRoom = await this.getExistingRoom([userId1, userId2]);
     if (existingRoom) {
-      throw new BadRequestException('이미 채팅방이 존재합니다.');
-    }
-
-    const [existingRequest] = await this.db
-      .select()
-      .from(chatRequests)
-      .where(
-        and(
-          eq(chatRequests.requesterId, requesterId),
-          eq(chatRequests.targetId, targetId),
-        ),
-      );
-
-    if (existingRequest) {
-      throw new BadRequestException('이미 채팅 요청을 보냈습니다.');
-    }
-
-    // 이미 상대방이 나에게 채팅 요청을 보냈는지 확인
-    const [existingRequestFromTarget] = await this.db
-      .select()
-      .from(chatRequests)
-      .where(
-        and(
-          eq(chatRequests.requesterId, targetId),
-          eq(chatRequests.targetId, requesterId),
-        ),
-      );
-
-    // 이미 보냈다면 채팅방을 만들고 요청을 삭제
-    if (existingRequestFromTarget) {
-      await this.acceptChatRequest(requesterId, targetId);
-
-      return;
-    }
-
-    await this.db.insert(chatRequests).values({
-      requesterId,
-      targetId,
-    });
-
-    // 상대방에게 알림을 보냄.
-    await this.notificationsService.createNotification(
-      targetId,
-      'chat_request',
-      {
-        requesterId,
-      },
-    );
-  }
-
-  /**
-   * 채팅 요청 수락
-   */
-  async acceptChatRequest(
-    targetId: string,
-    requesterId: string,
-  ): Promise<boolean> {
-    const [chatRequest] = await this.db
-      .select()
-      .from(chatRequests)
-      .where(
-        and(
-          eq(chatRequests.requesterId, requesterId),
-          eq(chatRequests.targetId, targetId),
-        ),
-      );
-
-    if (!chatRequest) {
-      throw new BadRequestException('채팅 요청이 존재하지 않습니다.');
+      return existingRoom;
     }
 
     const [newRoom] = await this.db.insert(rooms).values({}).returning();
 
-    const roomUsersData = [requesterId, targetId].map((userId) => ({
+    const roomUsersData = [userId1, userId2].map((userId) => ({
       roomId: newRoom.id,
       userId,
     }));
 
-    await this.db.transaction(async (tx) => {
-      await tx.insert(roomUsers).values(roomUsersData);
+    await this.db.insert(roomUsers).values(roomUsersData);
 
-      await tx
-        .delete(chatRequests)
-        .where(
-          and(
-            eq(chatRequests.requesterId, requesterId),
-            eq(chatRequests.targetId, targetId),
-          ),
-        );
-    });
-
-    return true;
-  }
-
-  /**
-   * 채팅 요청 거절
-   */
-  async rejectChatRequest(
-    targetId: string,
-    requesterId: string,
-  ): Promise<void> {
-    const [chatRequest] = await this.db
-      .select()
-      .from(chatRequests)
-      .where(
-        and(
-          eq(chatRequests.requesterId, requesterId),
-          eq(chatRequests.targetId, targetId),
-        ),
-      );
-
-    if (!chatRequest) {
-      throw new BadRequestException('채팅 요청이 존재하지 않습니다.');
-    }
-
-    await this.db
-      .delete(chatRequests)
-      .where(
-        and(
-          eq(chatRequests.requesterId, requesterId),
-          eq(chatRequests.targetId, targetId),
-        ),
-      );
+    return newRoom;
   }
 
   private async getExistingRoom(userIds: string[]): Promise<Room | null> {
@@ -216,29 +116,6 @@ export class RoomsService {
     }
 
     return room;
-  }
-
-  /**
-   * 현재 사용자에게 온 채팅 요청 목록 가져오기
-   */
-  async getPendingChatRequests(targetId: string): Promise<User[]> {
-    const requests = await this.db
-      .select({ requesterId: chatRequests.requesterId })
-      .from(chatRequests)
-      .where(eq(chatRequests.targetId, targetId));
-
-    const requesterIds = requests.map((req) => req.requesterId);
-
-    if (requesterIds.length === 0) {
-      return [];
-    }
-
-    const usersList = await this.db
-      .select()
-      .from(schema.users)
-      .where(inArray(schema.users.id, requesterIds));
-
-    return usersList;
   }
 
   async getRoomsByUserId(userId: string): Promise<Room[]> {

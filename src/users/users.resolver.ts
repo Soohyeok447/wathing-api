@@ -72,80 +72,61 @@ export class UsersResolver {
     return true;
   }
 
-  @Mutation(() => Boolean, { description: '팔로우 요청 보내기' })
+  @Mutation(() => Boolean, { description: '친구 요청 보내기' })
   @UseGuards(GqlAuthGuard)
-  async sendFollowRequest(
+  async sendFriendRequest(
     @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
-    await this.usersService.sendFollowRequest(currentUser.id, userId);
+    await this.usersService.sendFriendRequest(currentUser.id, userId);
     return true;
   }
 
-  @Mutation(() => Boolean, { description: '팔로우 요청 수락' })
+  @Mutation(() => Boolean, { description: '친구 요청 수락' })
   @UseGuards(GqlAuthGuard)
-  async acceptFollowRequest(
+  async acceptFriendRequest(
     @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
-    await this.usersService.acceptFollowRequest(currentUser.id, userId);
+    await this.usersService.acceptFriendRequest(currentUser.id, userId);
     return true;
   }
 
-  @Mutation(() => Boolean, { description: '팔로우 요청 거절' })
+  @Mutation(() => Boolean, { description: '친구 요청 거절' })
   @UseGuards(GqlAuthGuard)
-  async rejectFollowRequest(
+  async rejectFriendRequest(
     @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
-    await this.usersService.rejectFollowRequest(currentUser.id, userId);
-
+    await this.usersService.rejectFriendRequest(currentUser.id, userId);
     return true;
   }
 
-  @ResolveField(() => [User], {
-    description: '팔로우 요청 목록',
-    nullable: true,
-  })
-  async followRequests(@Parent() user: User): Promise<User[]> {
-    return this.usersService.getPendingFollowRequests(user.id);
-  }
-
-  @Mutation(() => Boolean, { description: '유저 언팔로우' })
+  @Mutation(() => Boolean, { description: '친구 삭제' })
   @UseGuards(GqlAuthGuard)
-  async unfollowUser(
-    @Args('userId', { type: () => ID, description: '언팔로우할 유저 ID' })
-    userId: string,
+  async unFriendUser(
+    @Args('userId', { type: () => ID }) userId: string,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
-    await this.usersService.unfollowUser(currentUser.id, userId);
-
+    await this.usersService.unfriendUser(currentUser.id, userId);
     return true;
   }
 
-  @ResolveField(() => Int, { description: '팔로워 수' })
-  async followersCount(@Parent() user: User): Promise<number> {
-    return this.usersService.getFollowersCount(user.id);
+  @ResolveField(() => Int, { nullable: true, description: '친구 수' })
+  async friendsCount(@Parent() user: User): Promise<number> {
+    return this.usersService.getFriendsCount(user.id);
   }
 
-  @ResolveField(() => Int, { description: '팔로잉 수' })
-  async followingCount(@Parent() user: User): Promise<number> {
-    return this.usersService.getFollowingCount(user.id);
+  @Query(() => [User], { nullable: true, description: '친구 목록' })
+  @UseGuards(GqlAuthGuard)
+  async myFriends(@CurrentUser() currentUser: User): Promise<User[]> {
+    return this.usersService.getFriends(currentUser.id);
   }
 
-  @ResolveField(() => [User], { description: '팔로워 목록', nullable: true })
-  async followers(@Parent() user: User): Promise<User[]> {
-    return this.usersService.getFollowers(user.id);
-  }
-
-  @ResolveField(() => [User], { description: '팔로잉 목록', nullable: true })
-  async following(@Parent() user: User): Promise<User[]> {
-    return this.usersService.getFollowing(user.id);
-  }
-
-  @ResolveField(() => [User], { description: '채팅 요청 목록', nullable: true })
-  async chatRequests(@Parent() user: User): Promise<User[]> {
-    return this.roomsService.getPendingChatRequests(user.id);
+  @Query(() => [User], { description: '친구 요청 목록 조회' })
+  @UseGuards(GqlAuthGuard)
+  async friendRequests(@CurrentUser() currentUser: User): Promise<User[]> {
+    return this.usersService.getFriendRequests(currentUser.id);
   }
 
   @ResolveField(() => StoryConnection, {
@@ -160,5 +141,47 @@ export class UsersResolver {
     offset: number,
   ): Promise<StoryConnection> {
     return this.storyService.findStoriesByUserId(user.id, limit, offset);
+  }
+
+  @Mutation(() => Boolean, { description: '사용자 구독하기' })
+  @UseGuards(GqlAuthGuard)
+  async subscribeUser(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.usersService.subscribeUser(currentUser.id, userId);
+    return true;
+  }
+
+  @Mutation(() => Boolean, { description: '구독 취소하기' })
+  @UseGuards(GqlAuthGuard)
+  async unsubscribeUser(
+    @Args('userId', { type: () => ID }) userId: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.usersService.unsubscribeUser(currentUser.id, userId);
+    return true;
+  }
+
+  @ResolveField(() => Int, { nullable: true, description: '구독한 사용자 수' })
+  async subscriptionsCount(@Parent() user: User): Promise<number> {
+    return this.usersService.getSubscriptionsCount(user.id);
+  }
+
+  @ResolveField(() => Int, { nullable: true, description: '구독자 수' })
+  async subscribersCount(@Parent() user: User): Promise<number> {
+    return this.usersService.getSubscribersCount(user.id);
+  }
+
+  @Query(() => [User], { description: '내 구독 목록 조회' })
+  @UseGuards(GqlAuthGuard)
+  async mySubscriptions(@CurrentUser() currentUser: User): Promise<User[]> {
+    return this.usersService.getSubscriptions(currentUser.id);
+  }
+
+  @Query(() => [User], { description: '내 구독자 목록 조회' })
+  @UseGuards(GqlAuthGuard)
+  async mySubscribers(@CurrentUser() currentUser: User): Promise<User[]> {
+    return this.usersService.getSubscribers(currentUser.id);
   }
 }

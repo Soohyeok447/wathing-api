@@ -17,23 +17,14 @@ export class User {
   @Field({ nullable: true, description: '프로필 이미지 ID' })
   profileImageId?: string;
 
-  @Field(() => Int, { description: '팔로워 수', defaultValue: 0 })
-  followersCount?: number;
+  @Field(() => Int, { description: '친구 수', nullable: true })
+  friendsCount?: number;
 
-  @Field(() => Int, { description: '팔로잉 수', defaultValue: 0 })
-  followingCount?: number;
+  @Field(() => Int, { nullable: true, description: '구독한 사용자 수' })
+  subscriptionsCount?: number;
 
-  @Field(() => [User], { description: '팔로워 목록', nullable: true })
-  followers?: User[];
-
-  @Field(() => [User], { description: '팔로잉 목록', nullable: true })
-  following?: User[];
-
-  @Field(() => [User], { description: '팔로우 요청 목록', nullable: true })
-  followRequests?: User[];
-
-  @Field(() => [User], { description: '채팅 요청 목록', nullable: true })
-  chatRequests?: User[];
+  @Field(() => Int, { nullable: true, description: '구독자 수' })
+  subscribersCount?: number;
 
   @Field({ description: '생성된 날짜' })
   createdAt: Date;

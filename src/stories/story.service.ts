@@ -166,15 +166,16 @@ export class StoryService {
       await this.db.insert(storyFilesTable).values(storyFilesData);
     }
 
-    // 팔로워들에게 알림 생성
-    const followers = await this.usersService.getFollowers(userId);
+    // 구독자들에게 알림 생성
+    const subscribers = await this.usersService.getSubscribers(userId);
 
     await Promise.all(
-      followers.map((follower) =>
-        this.notificationsService.createNotification(follower.id, 'new_post', {
-          userId,
-          storyId: newStory.id,
-        }),
+      subscribers.map((subscriber) =>
+        this.notificationsService.createNotification(
+          subscriber.id,
+          'new_post',
+          { userId, storyId: newStory.id },
+        ),
       ),
     );
 
@@ -241,41 +242,32 @@ export class StoryService {
   }
 
   /**
-   * 스토리에 좋아요를 토글합니다.
-   * @param storyId 스토리 ID
-   * @param userId 사용자 ID
-   * @returns 좋아요 상태 (true: 좋아요 추가, false: 좋아요 취소)
+   * 특정 스토리를 좋아요합니다.
    */
-  async toggleLikeStory(storyId: string, userId: string): Promise<boolean> {
-    const story = await this.findStoryById(storyId);
+  async likeStory(storyId: string, userId: string): Promise<void> {
+    const hasLiked = await this.hasLikedStory(storyId, userId);
 
-    if (!story) {
-      throw new NotFoundException('스토리를 찾을 수 없습니다.');
-    }
+    if (hasLiked) return;
 
-    const [existingLike] = await this.db
-      .select()
-      .from(storyLikes)
+    await this.db.insert(storyLikes).values({
+      storyId,
+      userId,
+    });
+  }
+
+  /**
+   * 특정 스토리의 좋아요를 취소합니다.
+   */
+  async dislikeStory(storyId: string, userId: string): Promise<void> {
+    const hasLiked = await this.hasLikedStory(storyId, userId);
+
+    if (!hasLiked) return;
+
+    await this.db
+      .delete(storyLikes)
       .where(
         and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)),
       );
-
-    if (existingLike) {
-      await this.db
-        .delete(storyLikes)
-        .where(
-          and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)),
-        );
-
-      return false; // 좋아요 취소
-    } else {
-      await this.db.insert(storyLikes).values({
-        storyId,
-        userId,
-      });
-
-      return true; // 좋아요 추가
-    }
   }
 
   /**
@@ -291,14 +283,14 @@ export class StoryService {
    * @param storyId 스토리 ID
    * @param userId 사용자 ID
    */
-  async hasUserLikedStory(storyId: string, userId: string): Promise<boolean> {
-    const [existingLike] = await this.db
+  async hasLikedStory(storyId: string, userId: string): Promise<boolean> {
+    const [like] = await this.db
       .select()
       .from(storyLikes)
       .where(
         and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId)),
       );
 
-    return existingLike ? true : false;
+    return !!like;
   }
 }

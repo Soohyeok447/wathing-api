@@ -6,6 +6,7 @@ import {
   Subscription,
   ResolveField,
   Parent,
+  Context,
 } from '@nestjs/graphql';
 import { MessagesService } from './messages.service';
 import { Message } from './types/message.type';
@@ -24,8 +25,6 @@ import { RoomsService } from '../rooms/rooms.service';
 import { UsersService } from '../users/users.service';
 import { SendMessageDto } from './dtos/send_message.dto';
 import { NotificationsService } from '../notifications/notifications.service';
-
-const subscriptionSet = new Set<string>();
 
 @Resolver(() => Message)
 export class MessagesResolver {
@@ -82,66 +81,13 @@ export class MessagesResolver {
     return message;
   }
 
-  /**
-   *
-   * @deprecated onMessages로 migration이후 삭제 예정
-   */
-  @Subscription(() => Message, {
-    name: 'onMessage',
-    description: '새로운 메시지 구독',
-    filter: (payload, variables) =>
-      payload.onMessage.roomId === variables.roomId,
-  })
-  @UseGuards(GqlAuthGuard)
-  onMessage(
-    @Args('roomId', { type: () => ID }) roomId: string,
-    @CurrentUser() currentUser: User,
-  ) {
-    // const subscriptionKey = `${currentUser.id}-${roomId}`;
-
-    const isUserInRoom = this.roomsService.isUserInRoom(roomId, currentUser.id);
-
-    if (!isUserInRoom) {
-      console.log(currentUser.name + ' - 채팅방에 속해있지 않습니다.');
-
-      throw new ForbiddenException('채팅방에 속해있지 않습니다.');
-    }
-
-    // if (subscriptionSet.has(subscriptionKey)) {
-    //   console.log(
-    //     `구독 중복 방지: ${currentUser.name}은 이미 ${roomId} 방을 구독하고 있습니다.`,
-    //   );
-
-    //   return null;
-    // }
-
-    // subscriptionSet.add(subscriptionKey);
-
-    const asyncIterator = pubSub.asyncIterableIterator(`onMessage:${roomId}`);
-
-    console.log(
-      currentUser.name +
-        ' - onMessage 구독 시작했습니다. onMessage는 deprecated 될 예정입니다.',
-    );
-
-    asyncIterator.return = () => {
-      // subscriptionSet.delete(subscriptionKey);
-
-      console.log(`${currentUser.name} - onMessage 구독 종료됨`);
-
-      return Promise.resolve({ done: true, value: undefined });
-    };
-
-    return asyncIterator;
-  }
-
   @Subscription(() => Message, {
     name: 'onMessages',
     description: '본인에게 도착하는 모든 메시지 구독',
     resolve: (value) => value.onMessage,
   })
   @UseGuards(GqlAuthGuard)
-  onMessages(@CurrentUser() currentUser: User) {
+  onMessages(@CurrentUser() currentUser: User, @Context() context) {
     console.log(currentUser.name + ' - onMessages 구독 시작');
 
     const asyncIterator = pubSub.asyncIterableIterator(
