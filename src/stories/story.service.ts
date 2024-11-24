@@ -245,7 +245,11 @@ export class StoryService {
    * 특정 스토리를 좋아요합니다.
    */
   async likeStory(storyId: string, userId: string): Promise<void> {
+    console.log('likeStory', storyId, userId);
+
     const hasLiked = await this.hasLikedStory(storyId, userId);
+
+    console.log('likeStory - hasLiked', hasLiked);
 
     if (hasLiked) return;
 
@@ -259,7 +263,11 @@ export class StoryService {
    * 특정 스토리의 좋아요를 취소합니다.
    */
   async dislikeStory(storyId: string, userId: string): Promise<void> {
+    console.log('dislikeStory', storyId, userId);
+
     const hasLiked = await this.hasLikedStory(storyId, userId);
+
+    console.log('dislikeStory - hasLiked', hasLiked);
 
     if (!hasLiked) return;
 
