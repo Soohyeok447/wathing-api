@@ -40,6 +40,42 @@ export class UsersResolver {
     return this.usersService.findById(id);
   }
 
+  @Query(() => [User], {
+    name: 'subscriptions',
+    description: '특정 사용자의 구독 목록 조회',
+  })
+  async subscriptions(
+    @Args('id', { type: () => String }) id: string,
+  ): Promise<User[]> {
+    return this.usersService.getSubscriptions(id);
+  }
+
+  @Query(() => [User], {
+    name: 'subscribers',
+    description: '특정 사용자의 구독자 목록 조회',
+  })
+  async subscribers(
+    @Args('id', { type: () => String }) id: string,
+  ): Promise<User[]> {
+    return this.usersService.getSubscribers(id);
+  }
+
+  @Query(() => [User], {
+    name: 'friends',
+    description: '특정 사용자의 친구 목록',
+  })
+  async friends(
+    @Args('id', { type: () => String }) id: string,
+  ): Promise<User[]> {
+    return this.usersService.getFriends(id);
+  }
+
+  @Query(() => [User], { description: '친구 요청 목록 조회' })
+  @UseGuards(GqlAuthGuard)
+  async friendRequests(@CurrentUser() currentUser: User): Promise<User[]> {
+    return this.usersService.getFriendRequests(currentUser.id);
+  }
+
   @ResolveField(() => File, { nullable: true, description: '프로필 이미지' })
   async profileImage(@Parent() user: User): Promise<File | null> {
     if (!user.profileImageId) {
@@ -117,18 +153,6 @@ export class UsersResolver {
     return this.usersService.getFriendsCount(user.id);
   }
 
-  @Query(() => [User], { nullable: true, description: '친구 목록' })
-  @UseGuards(GqlAuthGuard)
-  async myFriends(@CurrentUser() currentUser: User): Promise<User[]> {
-    return this.usersService.getFriends(currentUser.id);
-  }
-
-  @Query(() => [User], { description: '친구 요청 목록 조회' })
-  @UseGuards(GqlAuthGuard)
-  async friendRequests(@CurrentUser() currentUser: User): Promise<User[]> {
-    return this.usersService.getFriendRequests(currentUser.id);
-  }
-
   @ResolveField(() => StoryConnection, {
     description: '사용자의 스토리 목록',
     nullable: true,
@@ -173,15 +197,27 @@ export class UsersResolver {
     return this.usersService.getSubscribersCount(user.id);
   }
 
-  @Query(() => [User], { description: '내 구독 목록 조회' })
+  @ResolveField(() => Boolean, {
+    nullable: true,
+    description: '내가 해당 사용자를 구독하고 있는지 여부',
+  })
   @UseGuards(GqlAuthGuard)
-  async mySubscriptions(@CurrentUser() currentUser: User): Promise<User[]> {
-    return this.usersService.getSubscriptions(currentUser.id);
+  async isSubscribed(
+    @Parent() user: User,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    return this.usersService.isSubscribed(currentUser.id, user.id);
   }
 
-  @Query(() => [User], { description: '내 구독자 목록 조회' })
+  @ResolveField(() => Boolean, {
+    nullable: true,
+    description: '현재 사용자가 해당 유저와 친구인지 여부',
+  })
   @UseGuards(GqlAuthGuard)
-  async mySubscribers(@CurrentUser() currentUser: User): Promise<User[]> {
-    return this.usersService.getSubscribers(currentUser.id);
+  async isMyFriend(
+    @Parent() user: User,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    return this.usersService.checkIfFriends(currentUser.id, user.id);
   }
 }

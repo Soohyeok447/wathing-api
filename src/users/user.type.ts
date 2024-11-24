@@ -26,6 +26,18 @@ export class User {
   @Field(() => Int, { nullable: true, description: '구독자 수' })
   subscribersCount?: number;
 
+  @Field(() => Boolean, {
+    nullable: true,
+    description: '현재 사용자가 해당 유저와 친구인지 여부',
+  })
+  isMyFriend?: boolean;
+
+  @Field(() => Boolean, {
+    nullable: true,
+    description: '현재 사용자가 해당 유저를 구독하고 있는지 여부',
+  })
+  isSubscribed?: boolean;
+
   @Field({ description: '생성된 날짜' })
   createdAt: Date;
 

@@ -454,4 +454,21 @@ export class UsersService {
       eq(subscriptions.targetId, userId),
     );
   }
+
+  /**
+   * 특정 사용자를 구독하는지 확인
+   */
+  async isSubscribed(subscriberId: string, targetId: string): Promise<boolean> {
+    const [subscription] = await this.db
+      .select()
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.subscriberId, subscriberId),
+          eq(subscriptions.targetId, targetId),
+        ),
+      );
+
+    return !!subscription;
+  }
 }
