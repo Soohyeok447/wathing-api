@@ -41,43 +41,43 @@ export class NotificationsResolver {
   })
   @UseGuards(GqlAuthGuard)
   onNotifications(@CurrentUser() currentUser: User, @Context() context) {
-    const subscriptionKey = 'onNotifications';
+    // const subscriptionKey = 'onNotifications';
 
-    const subscriptionMap: Map<
-      string,
-      AsyncIterator<any>
-    > = context.subscriptionMap;
+    // const subscriptionMap: Map<
+    //   string,
+    //   AsyncIterator<any>
+    // > = context.subscriptionMap;
 
-    if (!subscriptionMap) {
-      throw new Error('구독 상태를 저장할 subscriptionMap이 없습니다.');
-    }
+    // if (!subscriptionMap) {
+    //   throw new Error('구독 상태를 저장할 subscriptionMap이 없습니다.');
+    // }
 
-    if (subscriptionMap.has(subscriptionKey)) {
-      console.log(
-        `구독 중복 방지: ${currentUser.name}은 이미 onNotifications를 구독하고 있습니다.`,
-      );
+    // if (subscriptionMap.has(subscriptionKey)) {
+    //   console.log(
+    //     `구독 중복 방지: ${currentUser.name}은 이미 onNotifications를 구독하고 있습니다.`,
+    //   );
 
-      // 기존의 AsyncIterator를 반환합니다.
-      return subscriptionMap.get(subscriptionKey);
-    }
+    //   // 기존의 AsyncIterator를 반환합니다.
+    //   return subscriptionMap.get(subscriptionKey);
+    // }
 
     console.log(`${currentUser.name} - onNotifications 구독 시작`);
 
     const asyncIterator = pubSub.asyncIterableIterator('onNotifications');
 
-    const originalReturn = asyncIterator.return;
+    // const originalReturn = asyncIterator.return;
     asyncIterator.return = () => {
       console.log(`${currentUser.name} - onNotifications 구독 종료됨`);
-      subscriptionMap.delete(subscriptionKey);
+      //   subscriptionMap.delete(subscriptionKey);
 
-      if (originalReturn) {
-        return originalReturn.call(asyncIterator);
-      }
+      //   if (originalReturn) {
+      //     return originalReturn.call(asyncIterator);
+      //   }
 
       return Promise.resolve({ done: true, value: undefined });
     };
 
-    subscriptionMap.set(subscriptionKey, asyncIterator);
+    // subscriptionMap.set(subscriptionKey, asyncIterator);
 
     return asyncIterator;
   }
