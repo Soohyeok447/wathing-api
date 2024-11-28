@@ -18,6 +18,11 @@ export class Comment {
   @Field({ description: '댓글 내용' })
   content: string;
 
+  @Field({
+    description: '댓글 타입 (text, emoji)',
+  })
+  type: string;
+
   @Field({ description: '작성일' })
   createdAt: Date;
 }

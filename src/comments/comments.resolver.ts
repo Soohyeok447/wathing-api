@@ -31,24 +31,26 @@ export class CommentsResolver {
   @Mutation(() => Comment, { description: '댓글 생성' })
   @UseGuards(GqlAuthGuard)
   async createComment(
-    @Args('input') { storyId, content }: CreateCommentDto,
+    @Args('input') { storyId, content, type }: CreateCommentDto,
     @CurrentUser() currentUser: User,
   ): Promise<Comment> {
     return this.commentsService.createComment(currentUser.id, {
       storyId,
       content,
+      type,
     });
   }
 
   @Mutation(() => Comment, { description: '댓글 수정' })
   @UseGuards(GqlAuthGuard)
   async updateComment(
-    @Args('input') { id, content }: UpdateCommentDto,
+    @Args('input') { id, content, type }: UpdateCommentDto,
     @CurrentUser() currentUser: User,
   ): Promise<Comment> {
     return this.commentsService.updateComment(currentUser.id, {
       id,
       content,
+      type,
     });
   }
 
