@@ -76,6 +76,15 @@ export class UsersResolver {
     return this.usersService.getFriendRequests(currentUser.id);
   }
 
+  @Query(() => [User], { description: '사용자 검색' })
+  async searchUsers(
+    @Args('query', { type: () => String }) query: string,
+    @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
+    @Args('offset', { type: () => Int, defaultValue: 0 }) offset: number,
+  ): Promise<User[]> {
+    return this.usersService.searchUsers(query, limit, offset);
+  }
+
   @ResolveField(() => File, { nullable: true, description: '프로필 이미지' })
   async profileImage(@Parent() user: User): Promise<File | null> {
     if (!user.profileImageId) {

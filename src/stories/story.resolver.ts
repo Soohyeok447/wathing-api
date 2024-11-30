@@ -47,6 +47,15 @@ export class StoryResolver {
     return this.storyService.getStories(limit, offset);
   }
 
+  @Query(() => [Story], { description: '스토리 검색' })
+  async searchStories(
+    @Args('query', { type: () => String }) query: string,
+    @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
+    @Args('offset', { type: () => Int, defaultValue: 0 }) offset: number,
+  ): Promise<Story[]> {
+    return this.storyService.searchStories(query, limit, offset);
+  }
+
   /**
    *  @deprecated 사용자의 스토리 목록 조회
    * TODO : 삭제 예정

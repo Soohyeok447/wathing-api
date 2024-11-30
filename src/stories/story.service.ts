@@ -12,7 +12,7 @@ import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
 import { comments, stories, storyLikes } from './../data/schema';
 import { storyFiles as storyFilesTable } from './../data/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, like } from 'drizzle-orm';
 import { isEmptyString } from '../utils/type_gurad';
 import { StoryFile } from './types/story_file.type';
 import { UpdateStoryDto } from './dtos/update_story.dto';
@@ -174,7 +174,11 @@ export class StoryService {
         this.notificationsService.createNotification(
           subscriber.id,
           'new_post',
-          { userId, storyId: newStory.id },
+          {
+            userId,
+            storyId: newStory.id,
+            message: `${user.name}님이 새로운 스토리를 작성했습니다.`,
+          },
         ),
       ),
     );
@@ -300,5 +304,31 @@ export class StoryService {
       );
 
     return !!like;
+  }
+
+  /**
+   * 검색어를 사용하여 스토리를 검색합니다.
+   */
+  async searchStories(
+    searchQuery: string,
+    limit = 10,
+    offset = 0,
+  ): Promise<Story[]> {
+    const searchPattern = `%${searchQuery}%`;
+
+    const searchedStories = await this.db
+      .select({
+        id: stories.id,
+        userId: stories.userId,
+        content: stories.content,
+        createdAt: stories.createdAt,
+      })
+      .from(stories)
+      .orderBy(desc(stories.createdAt))
+      .limit(limit)
+      .offset(offset)
+      .where(like(stories.content, searchPattern));
+
+    return searchedStories;
   }
 }

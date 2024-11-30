@@ -7,7 +7,7 @@ import {
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { subscriptions, User, users } from '../data/schema';
 import * as schema from '../data/schema';
-import { eq, inArray, and, or } from 'drizzle-orm';
+import { eq, inArray, and, or, like } from 'drizzle-orm';
 import { isDateString, isEmptyString } from '../utils/type_gurad';
 import { UpdateUserDto } from './dtos/update_user.dto';
 import { FilesService } from '../files/files.service';
@@ -98,11 +98,14 @@ export class UsersService {
     });
 
     // 상대방에게 알림 생성
+    const user = await this.findById(userId);
+
     await this.notificationsService.createNotification(
       targetId,
       'friend_request',
       {
         requesterId: userId,
+        message: `${user.name}님이 친구 요청을 보냈습니다.`,
       },
     );
   }
@@ -470,5 +473,21 @@ export class UsersService {
       );
 
     return !!subscription;
+  }
+
+  /**
+   * 사용자 검색
+   */
+  async searchUsers(query: string, limit = 10, offset = 0): Promise<User[]> {
+    const searchPattern = `%${query}%`;
+
+    const searchedUsers = await this.db
+      .select()
+      .from(users)
+      .where(like(users.name, searchPattern))
+      .limit(limit)
+      .offset(offset);
+
+    return searchedUsers;
   }
 }

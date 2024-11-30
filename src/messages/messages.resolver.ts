@@ -60,15 +60,19 @@ export class MessagesResolver {
 
     const usersInRoom = await this.roomsService.getUsersInRoom(roomId);
 
-    const publishPromises = usersInRoom.map(({ id: receiverId }) => {
+    const publishPromises = usersInRoom.map(async ({ id: receiverId }) => {
       pubSub.publish(`onMessage:${receiverId}`, {
         onMessage: message,
       });
+
+      const sender = await this.usersService.findById(currentUser.id);
 
       // 상대방에게 메시지 알림 생성
       this.notificationsService.createNotification(receiverId, 'message', {
         roomId,
         messageId: message.id,
+        content: message.content,
+        message: `${sender.name}님이 메시지를 보냈습니다.`,
         senderId: message.senderId,
       });
     });
