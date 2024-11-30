@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { subscriptions, User, users } from '../data/schema';
+import { credentials, subscriptions, User, users } from '../data/schema';
 import * as schema from '../data/schema';
 import { eq, inArray, and, or, like } from 'drizzle-orm';
 import { isDateString, isEmptyString } from '../utils/type_gurad';
@@ -98,16 +98,29 @@ export class UsersService {
     });
 
     // 상대방에게 알림 생성
-    const user = await this.findById(userId);
+    const requester = await this.findById(userId);
+    const { deviceToken } = await this.findCredentialById(targetId);
 
     await this.notificationsService.createNotification(
       targetId,
       'friend_request',
       {
         requesterId: userId,
-        message: `${user.name}님이 친구 요청을 보냈습니다.`,
+        message: `${requester.name}님이 친구 요청을 보냈습니다.`,
       },
     );
+
+    if (deviceToken) {
+      await this.notificationsService.sendPushNotification(
+        deviceToken,
+        '친구 신청',
+        `${requester.name}님이 친구 요청을 보냈습니다.`,
+        {
+          requesterId: userId,
+          message: `${requester.name}님이 친구 요청을 보냈습니다.`,
+        },
+      );
+    }
   }
 
   /**
@@ -489,5 +502,31 @@ export class UsersService {
       .offset(offset);
 
     return searchedUsers;
+  }
+
+  /**
+   * 사용자의 디바이스 토큰 업데이트
+   */
+  async updateDeviceToken(userId: string, deviceToken: string): Promise<void> {
+    const data: Partial<schema.Credential> = {
+      deviceToken,
+    };
+
+    await this.db
+      .update(credentials)
+      .set(data)
+      .where(eq(credentials.userId, userId));
+  }
+
+  /**
+   * credential 조회
+   */
+  async findCredentialById(id: string): Promise<schema.Credential | undefined> {
+    const [result] = await this.db
+      .select()
+      .from(credentials)
+      .where(eq(credentials.id, id));
+
+    return result;
   }
 }

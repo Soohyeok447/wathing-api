@@ -38,4 +38,6 @@ lerna-debug.log*
 .env.production
 .env.local
 
+wathing-fcm-key.json
+
 /src/data/drizzle

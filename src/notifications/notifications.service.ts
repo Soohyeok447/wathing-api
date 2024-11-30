@@ -2,14 +2,45 @@ import { Injectable, Inject, BadRequestException } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../data/schema';
 import { eq, desc } from 'drizzle-orm';
-import { Notification, notifications } from '../data/schema';
+import { credentials, Notification, notifications } from '../data/schema';
 import { pubSub } from '../core/config/pubsub';
+import * as admin from 'firebase-admin';
 
 @Injectable()
 export class NotificationsService {
   constructor(
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
+    @Inject('FIREBASE_ADMIN') private readonly firebaseAdmin: admin.app.App,
   ) {}
+
+  async sendPushNotification(
+    token: string,
+    title: string,
+    body: string,
+    data?: { [key: string]: string },
+  ): Promise<void> {
+    const message: admin.messaging.Message = {
+      token,
+      notification: {
+        title,
+        body,
+      },
+      data,
+    };
+
+    try {
+      await this.firebaseAdmin.messaging().send(message);
+    } catch (error) {
+      if (
+        error.code === 'messaging/invalid-registration-token' ||
+        error.code === 'messaging/registration-token-not-registered'
+      ) {
+        await this.nullDeviceToken(token);
+      } else {
+        console.error('푸시 알림 전송 실패:', error);
+      }
+    }
+  }
 
   async createNotification(
     userId: string,
@@ -62,5 +93,16 @@ export class NotificationsService {
       .update(notifications)
       .set(updateData)
       .where(eq(notifications.id, notificationId));
+  }
+
+  async nullDeviceToken(token: string): Promise<void> {
+    const data: Partial<schema.Credential> = {
+      deviceToken: null,
+    };
+
+    await this.db
+      .update(credentials)
+      .set(data)
+      .where(eq(credentials.deviceToken, token));
   }
 }

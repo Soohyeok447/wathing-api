@@ -229,4 +229,14 @@ export class UsersResolver {
   ): Promise<boolean> {
     return this.usersService.checkIfFriends(currentUser.id, user.id);
   }
+
+  @Mutation(() => Boolean, { description: '사용자의 FCM 토큰 업데이트' })
+  @UseGuards(GqlAuthGuard)
+  async updateUserDeviceToken(
+    @Args('deviceToken', { type: () => String }) deviceToken: string,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.usersService.updateDeviceToken(currentUser.id, deviceToken);
+    return true;
+  }
 }

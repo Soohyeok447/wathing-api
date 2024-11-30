@@ -13,6 +13,7 @@ import { MessagesModule } from './messages/messages.module';
 import { RoomsModule } from './rooms/rooms.module';
 import { EmojiModule } from './emoji/emoji.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { FirebaseAdminModule } from './core/config/firebase_admin/firebase_admin.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     // ShortVideoModule,
     EmojiModule,
     NotificationsModule,
+    FirebaseAdminModule,
   ],
   controllers: [HealthController],
 })

@@ -170,7 +170,7 @@ export class StoryService {
     const subscribers = await this.usersService.getSubscribers(userId);
 
     await Promise.all(
-      subscribers.map((subscriber) =>
+      subscribers.map(async (subscriber) => {
         this.notificationsService.createNotification(
           subscriber.id,
           'new_post',
@@ -179,8 +179,25 @@ export class StoryService {
             storyId: newStory.id,
             message: `${user.name}님이 새로운 스토리를 작성했습니다.`,
           },
-        ),
-      ),
+        );
+
+        const { deviceToken } = await this.usersService.findCredentialById(
+          subscriber.id,
+        );
+
+        if (deviceToken) {
+          await this.notificationsService.sendPushNotification(
+            deviceToken,
+            '새로운 스토리',
+            `${user.name}님이 새로운 스토리를 작성했습니다.`,
+            {
+              userId,
+              storyId: newStory.id,
+              message: `${user.name}님이 새로운 스토리를 작성했습니다.`,
+            },
+          );
+        }
+      }),
     );
 
     return newStory;

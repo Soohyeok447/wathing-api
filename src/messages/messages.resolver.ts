@@ -67,6 +67,10 @@ export class MessagesResolver {
 
       const sender = await this.usersService.findById(currentUser.id);
 
+      const { deviceToken } = await this.usersService.findCredentialById(
+        currentUser.id,
+      );
+
       // 상대방에게 메시지 알림 생성
       this.notificationsService.createNotification(receiverId, 'message', {
         roomId,
@@ -75,6 +79,21 @@ export class MessagesResolver {
         message: `${sender.name}님이 메시지를 보냈습니다.`,
         senderId: message.senderId,
       });
+
+      if (deviceToken) {
+        await this.notificationsService.sendPushNotification(
+          deviceToken,
+          '새로운 메시지',
+          `${sender.name}님으로부터 메시지가 도착했습니다.`,
+          {
+            roomId,
+            messageId: message.id,
+            content: message.content,
+            message: `${sender.name}님이 메시지를 보냈습니다.`,
+            senderId: message.senderId,
+          },
+        );
+      }
     });
 
     await Promise.all(publishPromises);
