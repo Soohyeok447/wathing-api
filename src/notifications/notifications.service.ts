@@ -18,7 +18,6 @@ export class NotificationsService {
   ): Promise<void> {
     if (
       type !== 'new_post' &&
-      type !== 'chat_request' &&
       type !== 'friend_request' &&
       type !== 'message'
     ) {
