@@ -9,7 +9,6 @@ RUN npm ci
 COPY . .
 
 RUN npm i drizzle-kit
-RUN npx drizzle-kit generate
 
 RUN npm run build
 
@@ -20,4 +19,4 @@ ENV TZ=Asia/Seoul
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx drizzle-kit migrate && npx drizzle-kit up && node dist/src/main"]
+CMD ["sh", "-c", "npx drizzle-kit generate && npx drizzle-kit migrate && npx drizzle-kit up && node dist/src/main"]
