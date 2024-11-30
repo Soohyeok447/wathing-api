@@ -17,3 +17,4 @@ credentials
 Dockerfile
 
 src/data/drizzle
+wathing-fcm-key.json

@@ -19,17 +19,20 @@ type User {
   """프로필 이미지 ID"""
   profileImageId: String
 
-  """팔로워 수"""
-  followersCount: Int!
+  """친구 수"""
+  friendsCount: Int
 
-  """팔로잉 수"""
-  followingCount: Int!
+  """구독한 사용자 수"""
+  subscriptionsCount: Int
 
-  """팔로워 목록"""
-  followers: [User!]
+  """구독자 수"""
+  subscribersCount: Int
 
-  """팔로잉 목록"""
-  following: [User!]
+  """현재 사용자가 해당 유저와 친구인지 여부"""
+  isMyFriend: Boolean
+
+  """현재 사용자가 해당 유저를 구독하고 있는지 여부"""
+  isSubscribed: Boolean
 
   """생성된 날짜"""
   createdAt: DateTime!
@@ -39,6 +42,9 @@ type User {
 
   """프로필 이미지"""
   profileImage: File
+
+  """사용자의 스토리 목록"""
+  stories(limit: Int = 5, offset: Int = 0): StoryConnection
 }
 
 """
@@ -88,7 +94,13 @@ type Story {
   files: [StoryFile!]
 
   """댓글 개수"""
-  commentsCount: Int!
+  commentsCount: Int
+
+  """좋아요 개수"""
+  likesCount: Int
+
+  """현재 사용자가 스토리에 좋아요를 했는지 여부"""
+  hasLiked: Boolean
 
   """스토리 생성일자"""
   createdAt: DateTime!
@@ -103,10 +115,77 @@ type Story {
   comments(limit: Int = 5, offset: Int = 0): CommentConnection!
 }
 
+"""스토리 페이지네이션 정보"""
 type StoryConnection {
   edges: [Story!]!
   hasNextPage: Boolean!
   nextOffset: Float
+}
+
+"""알림 엔티티"""
+type Notification {
+  """알림 ID"""
+  id: ID!
+
+  """알림 유형"""
+  type: String!
+
+  """알림 데이터(JSON 문자열)"""
+  data: String
+
+  """읽음 여부"""
+  read: Boolean!
+
+  """생성된 날짜"""
+  createdAt: DateTime!
+}
+
+"""채팅방 엔티티"""
+type Room {
+  """채팅방 ID"""
+  id: ID!
+
+  """채팅방에 참여한 사용자들"""
+  users: [User!]!
+
+  """생성된 날짜"""
+  createdAt: DateTime!
+
+  """채팅방의 메시지 목록"""
+  messages(limit: Int = 20, offset: Int = 0): MessageConnection!
+}
+
+"""메시지 엔티티"""
+type Message {
+  """메시지 ID"""
+  id: ID!
+
+  """채팅방"""
+  room: Room
+
+  """메시지 송신 유저"""
+  sender: User
+
+  """메시지 내용"""
+  content: String!
+
+  """메시지 타입 (text, emoji)"""
+  type: String!
+
+  """생성된 날짜"""
+  createdAt: DateTime!
+}
+
+"""메시지 페이지네이션 정보"""
+type MessageConnection {
+  """메시지 목록"""
+  edges: [Message!]!
+
+  """다음 페이지 여부"""
+  hasNextPage: Boolean!
+
+  """다음 페이지 오프셋"""
+  nextOffset: Int
 }
 
 """댓글 엔티티"""
@@ -126,22 +205,61 @@ type Comment {
   """댓글 내용"""
   content: String!
 
+  """댓글 타입 (text, emoji)"""
+  type: String!
+
   """작성일"""
   createdAt: DateTime!
-
-  """댓글 목록"""
-  comments(limit: Int = 5, offset: Int = 0): CommentConnection!
 }
 
+"""댓글 페이지네이션 정보"""
 type CommentConnection {
+  """댓글 목록"""
   edges: [Comment!]!
+
+  """다음 페이지 여부"""
   hasNextPage: Boolean!
-  nextOffset: Float
+
+  """다음 페이지 오프셋"""
+  nextOffset: Int
+}
+
+"""이모지 엔티티"""
+type Emoji {
+  """이모지 ID"""
+  id: ID!
+
+  """이모지 키"""
+  key: String!
 }
 
 type Query {
-  """유저 찾기 (profileImage: File 필드 포함)"""
+  """유저 찾기"""
   user(id: String!): User!
+
+  """특정 사용자의 구독 목록 조회"""
+  subscriptions(id: String!): [User!]!
+
+  """특정 사용자의 구독자 목록 조회"""
+  subscribers(id: String!): [User!]!
+
+  """특정 사용자의 친구 목록"""
+  friends(id: String!): [User!]!
+
+  """친구 요청 목록 조회"""
+  friendRequests: [User!]!
+
+  """사용자 검색"""
+  searchUsers(query: String!, limit: Int! = 10, offset: Int! = 0): [User!]!
+
+  """알림 목록 조회"""
+  notifications: [Notification!]!
+
+  """내 채팅방 목록 조회"""
+  myRooms: [Room!]!
+
+  """채팅방 상세 조회"""
+  room(roomId: ID!): Room!
 
   """스토리 조회"""
   story(
@@ -151,6 +269,15 @@ type Query {
 
   """스토리 목록 조회"""
   stories(limit: Int = 5, offset: Int = 0): StoryConnection!
+
+  """스토리 검색"""
+  searchStories(query: String!, limit: Int! = 10, offset: Int! = 0): [Story!]!
+
+  """사용자의 스토리 목록 조회"""
+  userStories(userId: ID!, limit: Int = 5, offset: Int = 0): StoryConnection!
+
+  """모든 이모지 키를 가져옵니다."""
+  getEmojis: [Emoji!]!
 }
 
 type Mutation {
@@ -158,19 +285,37 @@ type Mutation {
   updateUser(input: UpdateUserDto!): User!
 
   """유저 삭제"""
-  deleteUser(id: ID!): Boolean!
+  deleteUser: Boolean!
 
-  """유저 팔로우"""
-  followUser(
-    """팔로우할 유저 ID"""
-    userId: ID!
-  ): Boolean!
+  """친구 요청 보내기"""
+  sendFriendRequest(userId: ID!): Boolean!
 
-  """유저 언팔로우"""
-  unfollowUser(
-    """언팔로우할 유저 ID"""
-    userId: ID!
-  ): Boolean!
+  """친구 요청 수락"""
+  acceptFriendRequest(userId: ID!): Boolean!
+
+  """친구 요청 거절"""
+  rejectFriendRequest(userId: ID!): Boolean!
+
+  """친구 삭제"""
+  unFriendUser(userId: ID!): Boolean!
+
+  """사용자 구독하기"""
+  subscribeUser(userId: ID!): Boolean!
+
+  """구독 취소하기"""
+  unsubscribeUser(userId: ID!): Boolean!
+
+  """사용자의 FCM 토큰 업데이트"""
+  updateUserDeviceToken(deviceToken: String!): Boolean!
+
+  """알림 읽음 처리"""
+  readNotification(notificationId: String!): Boolean!
+
+  """채팅방 생성"""
+  createRoom(userId: ID!): Room!
+
+  """채팅방 나가기"""
+  leaveRoom(roomId: ID!): Boolean!
 
   """새로운 스토리를 생성."""
   createStory(input: CreateStoryDto!): Story!
@@ -184,6 +329,12 @@ type Mutation {
     id: ID!
   ): Boolean!
 
+  """스토리에 좋아요 누르기"""
+  likeStory(storyId: ID!): Boolean!
+
+  """스토리에 좋아요 취소하기"""
+  dislikeStory(storyId: ID!): Boolean!
+
   """댓글 생성"""
   createComment(input: CreateCommentDto!): Comment!
 
@@ -195,13 +346,13 @@ type Mutation {
     """댓글 ID"""
     id: ID!
   ): Boolean!
+
+  """메시지 전송"""
+  sendMessage(input: SendMessageDto!): Message!
 }
 
 """유저 수정에 필요한 입력 데이터"""
 input UpdateUserDto {
-  """유저의 고유 ID"""
-  id: ID!
-
   """유저 이름 (최소 2자, 최대 12자)"""
   name: String
 
@@ -245,18 +396,50 @@ input UpdateStoryDto {
   files: [FileOrderInput!]
 }
 
+"""댓글 생성에 필요한 입력 데이터"""
 input CreateCommentDto {
   """스토리 ID"""
   storyId: ID!
 
   """댓글 내용"""
   content: String!
+
+  """댓글 타입 (text, emoji)"""
+  type: MessageType! = TEXT
 }
 
+enum MessageType {
+  TEXT
+  EMOJI
+}
+
+"""댓글 업데이트에 필요한 입력 데이터"""
 input UpdateCommentDto {
   """댓글 ID"""
   id: ID!
 
   """수정할 내용"""
   content: String!
+
+  """댓글 타입 (text, emoji)"""
+  type: MessageType! = TEXT
+}
+
+"""메시지 전송에 필요한 입력 데이터"""
+input SendMessageDto {
+  """메시지 내용"""
+  content: String!
+
+  """채팅방 ID"""
+  roomId: ID!
+
+  """메시지 타입 (text, emoji)"""
+  type: MessageType!
+}
+
+type Subscription {
+  onNotifications: Notification!
+
+  """본인에게 도착하는 모든 메시지 구독"""
+  onMessages: Message!
 }

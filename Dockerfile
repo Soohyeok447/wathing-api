@@ -3,7 +3,6 @@ FROM node:18.20.4
 WORKDIR /home/wathing-api
 
 COPY package*.json ./
-COPY wathing-fcm-key.json ./
 
 RUN npm ci
 
