@@ -2,7 +2,7 @@ import { Module, Global } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const serviceAccount = require('./wathing-fcm-key.json');
+const serviceAccount = require('./../../../wathing-fcm-key.json');
 
 @Global()
 @Module({
