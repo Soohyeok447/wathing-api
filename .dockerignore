@@ -18,3 +18,4 @@ Dockerfile
 
 src/data/drizzle
 wathing-fcm-key.json
+wathing-fcm-key.txt

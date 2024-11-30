@@ -17,7 +17,12 @@ import * as admin from 'firebase-admin';
           );
         }
 
-        const serviceAccount = JSON.parse(serviceAccountKey);
+        const serviceAccountKeyJson = Buffer.from(
+          serviceAccountKey,
+          'base64',
+        ).toString('utf8');
+
+        const serviceAccount = JSON.parse(serviceAccountKeyJson);
 
         return admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),

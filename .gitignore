@@ -39,5 +39,6 @@ lerna-debug.log*
 .env.local
 
 wathing-fcm-key.json
+wathing-fcm-key.txt
 
 /src/data/drizzle
