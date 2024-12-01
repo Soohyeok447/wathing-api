@@ -188,7 +188,7 @@ export class StoryService {
         if (credential && credential.deviceToken) {
           await this.notificationsService.sendPushNotification(
             credential.deviceToken,
-            '새로운 스토리',
+            'Wathing',
             `${user.name}님이 새로운 스토리를 작성했습니다.`,
             {
               userId,
