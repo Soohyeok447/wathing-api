@@ -24,6 +24,7 @@ export class NotificationsService {
       notification: {
         title,
         body,
+        imageUrl: `${process.env.CDN_DOMAIN}/logo.png`,
       },
       data,
     };
