@@ -99,7 +99,7 @@ export class UsersService {
 
     // 상대방에게 알림 생성
     const requester = await this.findById(userId);
-    const { deviceToken } = await this.findCredentialById(targetId);
+    const credential = await this.findCredentialById(targetId);
 
     await this.notificationsService.createNotification(
       targetId,
@@ -110,9 +110,9 @@ export class UsersService {
       },
     );
 
-    if (deviceToken) {
+    if (credential && credential.deviceToken) {
       await this.notificationsService.sendPushNotification(
-        deviceToken,
+        credential.deviceToken,
         '친구 신청',
         `${requester.name}님이 친구 요청을 보냈습니다.`,
         {
@@ -521,12 +521,12 @@ export class UsersService {
   /**
    * credential 조회
    */
-  async findCredentialById(id: string): Promise<schema.Credential | undefined> {
-    const [result] = await this.db
+  async findCredentialById(userId: string): Promise<schema.Credential | null> {
+    const [credential] = await this.db
       .select()
       .from(credentials)
-      .where(eq(credentials.id, id));
+      .where(eq(credentials.userId, userId));
 
-    return result;
+    return credential || null;
   }
 }

@@ -67,9 +67,7 @@ export class MessagesResolver {
 
       const sender = await this.usersService.findById(currentUser.id);
 
-      const { deviceToken } = await this.usersService.findCredentialById(
-        currentUser.id,
-      );
+      const credential = await this.usersService.findCredentialById(receiverId);
 
       // 상대방에게 메시지 알림 생성
       this.notificationsService.createNotification(receiverId, 'message', {
@@ -80,9 +78,9 @@ export class MessagesResolver {
         senderId: message.senderId,
       });
 
-      if (deviceToken) {
+      if (credential && credential.deviceToken) {
         await this.notificationsService.sendPushNotification(
-          deviceToken,
+          credential.deviceToken,
           '새로운 메시지',
           `${sender.name}님으로부터 메시지가 도착했습니다.`,
           {

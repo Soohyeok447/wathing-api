@@ -181,13 +181,13 @@ export class StoryService {
           },
         );
 
-        const { deviceToken } = await this.usersService.findCredentialById(
+        const credential = await this.usersService.findCredentialById(
           subscriber.id,
         );
 
-        if (deviceToken) {
+        if (credential && credential.deviceToken) {
           await this.notificationsService.sendPushNotification(
-            deviceToken,
+            credential.deviceToken,
             '새로운 스토리',
             `${user.name}님이 새로운 스토리를 작성했습니다.`,
             {
