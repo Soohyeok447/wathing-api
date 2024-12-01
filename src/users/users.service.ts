@@ -113,7 +113,7 @@ export class UsersService {
     if (credential && credential.deviceToken) {
       await this.notificationsService.sendPushNotification(
         credential.deviceToken,
-        'Wathing',
+        `새 친구 요청`,
         `${requester.name}님이 친구 요청을 보냈습니다.`,
         {
           requesterId: userId,

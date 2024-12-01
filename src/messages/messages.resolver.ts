@@ -82,8 +82,8 @@ export class MessagesResolver {
         if (credential && credential.deviceToken) {
           await this.notificationsService.sendPushNotification(
             credential.deviceToken,
-            'Wathing',
-            `${sender.name}님으로부터 메시지가 도착했습니다.`,
+            `${sender.name}`,
+            `${message.content}`,
             {
               roomId,
               messageId: message.id,
