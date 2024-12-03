@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   HttpCode,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JsonWebTokenError, TokenExpiredError } from '@nestjs/jwt';
@@ -23,6 +24,9 @@ import {
   AccessTokenResponseDto,
   AuthResponseDto,
 } from './dtos/auth_response.dto';
+import { JwtAuthGuard } from '../core/guards/jwt.guard';
+import { VerifyPasswordDto } from './dtos/verify_password.dto';
+import { ResetPasswordDto } from './dtos/reset_password.dtd';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -127,5 +131,61 @@ export class AuthController {
         throw new BadRequestException('토큰 갱신 중 오류가 발생했습니다.');
       }
     }
+  }
+
+  @Post('password/verify')
+  @HttpCode(200)
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: '비밀번호 확인',
+    description: '사용자의 현재 비밀번호가 올바른지 확인합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '비밀번호 확인 성공',
+  })
+  @ApiBadRequestResponse({
+    description: '입력 데이터가 잘못되었거나 비밀번호가 올바르지 않음',
+  })
+  async verifyPassword(
+    @Body() body: VerifyPasswordDto,
+  ): Promise<{ success: boolean }> {
+    const { id, password } = body;
+
+    const isMatch = await this.authService.verifyPassword(id, password);
+
+    if (!isMatch) {
+      throw new BadRequestException('비밀번호가 올바르지 않습니다.');
+    }
+
+    return { success: true };
+  }
+
+  @Post('password/reset')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: '비밀번호 재설정',
+    description:
+      '사용자의 비밀번호를 새로운 비밀번호로 변경하고, 새로운 액세스 및 리프레시 토큰을 발급합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '비밀번호 재설정 성공',
+    type: AuthResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: '입력 데이터가 잘못되었거나 권한이 없음',
+  })
+  async resetPassword(
+    @Body() body: ResetPasswordDto,
+  ): Promise<AuthResponseDto> {
+    const { id, newPassword } = body;
+
+    const { accessToken, refreshToken } = await this.authService.resetPassword(
+      id,
+      newPassword,
+    );
+
+    return { accessToken, refreshToken };
   }
 }

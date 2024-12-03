@@ -197,4 +197,46 @@ export class AuthService {
       expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
     });
   }
+
+  async verifyPassword(id: string, password: string): Promise<boolean> {
+    const [credential] = await this.db
+      .select()
+      .from(credentials)
+      .where(eq(credentials.id, id));
+
+    if (!credential) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    const isMatch = await bcrypt.compare(password, credential.password);
+
+    return isMatch;
+  }
+
+  async resetPassword(
+    id: string,
+    newPassword: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    if (!newPassword) {
+      throw new BadRequestException('새 비밀번호는 필수 입력 사항입니다.');
+    }
+
+    const saltRounds = parseInt(this.configService.get<string>('SALT_ROUNDS'));
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    await this.db
+      .update(credentials)
+      .set({ password: hashedPassword })
+      .where(eq(credentials.id, id));
+
+    const accessToken = await this.createAccessToken(id);
+    const refreshToken = this.createRefreshToken(id);
+
+    await this.db
+      .update(credentials)
+      .set({ refreshToken })
+      .where(eq(credentials.userId, id));
+
+    return { accessToken, refreshToken };
+  }
 }
