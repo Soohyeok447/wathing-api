@@ -5,6 +5,7 @@ import { files } from '.';
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
+  email: text('email').notNull(),
   birthday: text('birthday').notNull(),
   statusMessage: text('status_message'),
   profileImageId: uuid('profile_image_id').references(() => files.id, {

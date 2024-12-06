@@ -18,6 +18,12 @@ export class SignUpDto {
   name: string;
 
   @ApiProperty({
+    description: '이메일 주소',
+    example: 'testuser@example.com',
+  })
+  email: string;
+
+  @ApiProperty({
     description: '생일',
     type: 'string',
     example: '1990-03-03',

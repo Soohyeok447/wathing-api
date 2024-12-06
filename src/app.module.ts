@@ -14,6 +14,7 @@ import { RoomsModule } from './rooms/rooms.module';
 import { EmojiModule } from './emoji/emoji.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { FirebaseAdminModule } from './core/config/firebase_admin.module';
+import { MailerModule } from './core/config/mailer.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { FirebaseAdminModule } from './core/config/firebase_admin.module';
     MessagesModule,
     HttpModule,
     TerminusModule,
+    MailerModule,
     // ShortVideoModule,
     EmojiModule,
     NotificationsModule,

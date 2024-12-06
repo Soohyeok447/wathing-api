@@ -8,6 +8,9 @@ export class UpdateUserDto {
   @Field({ nullable: true, description: '생년월일 (yyyy-mm-dd 형식)' })
   birthday?: string;
 
+  @Field({ nullable: true, description: '이메일' })
+  email?: string;
+
   @Field({ nullable: true, description: '상태 메시지 (최대 30자)' })
   statusMessage?: string;
 

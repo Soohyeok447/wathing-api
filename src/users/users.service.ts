@@ -3,12 +3,13 @@ import {
   Inject,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { credentials, subscriptions, User, users } from '../data/schema';
 import * as schema from '../data/schema';
 import { eq, inArray, and, or, like } from 'drizzle-orm';
-import { isDateString, isEmptyString } from '../utils/type_gurad';
+import { isDateString, isEmail, isEmptyString } from '../utils/type_gurad';
 import { UpdateUserDto } from './dtos/update_user.dto';
 import { FilesService } from '../files/files.service';
 import { User as UserEntity } from '../users/user.type';
@@ -297,7 +298,7 @@ export class UsersService {
 
   async updateUser(
     id: string,
-    { name, birthday, statusMessage, profileImageId }: UpdateUserDto,
+    { name, birthday, email, statusMessage, profileImageId }: UpdateUserDto,
   ): Promise<User> {
     if (!id) {
       throw new BadRequestException('id가 없습니다.');
@@ -317,10 +318,26 @@ export class UsersService {
       throw new BadRequestException('birthday는 yyyy-mm-dd 형식이어야 합니다.');
     }
 
+    if (email) {
+      if (!isEmail(email)) {
+        throw new BadRequestException('유효한 이메일 형식이 아닙니다.');
+      }
+
+      const [existingEmailUser] = await this.db
+        .select()
+        .from(users)
+        .where(eq(users.email, email));
+
+      if (existingEmailUser) {
+        throw new ConflictException('이미 가입된 이메일입니다.');
+      }
+    }
+
     const updateData: Partial<User> = {
       name,
       birthday,
       statusMessage,
+      email,
       profileImageId,
       updatedAt: new Date(),
     };

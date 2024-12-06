@@ -13,9 +13,10 @@ import { credentials, users } from '../data/schema';
 import { NewCredential } from '../data/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
-import { isEmptyString, isDateString } from '../utils/type_gurad';
+import { isEmptyString, isDateString, isEmail } from '../utils/type_gurad';
 import { eq } from 'drizzle-orm';
 import { FilesService } from '../files/files.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -24,12 +25,14 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly filesService: FilesService,
     @Inject('DRIZZLE') private readonly db: NodePgDatabase<typeof schema>,
+    private readonly mailerService: MailerService,
   ) {}
 
   async signup(
     id: string,
     password: string,
     name: string,
+    email: string,
     birthday: string,
     profileImageId?: string,
   ): Promise<{
@@ -46,6 +49,14 @@ export class AuthService {
 
     if (!name) {
       throw new BadRequestException('name은 필수 입력 사항입니다.');
+    }
+
+    if (!email) {
+      throw new BadRequestException('email은 필수 입력 사항입니다.');
+    }
+
+    if (!isEmail(email)) {
+      throw new BadRequestException('유효한 이메일 형식이 아닙니다.');
     }
 
     if (!birthday) {
@@ -70,6 +81,15 @@ export class AuthService {
       }
     }
 
+    const [existingEmailUser] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+
+    if (existingEmailUser) {
+      throw new ConflictException('이미 가입된 이메일입니다.');
+    }
+
     const [existing] = await this.db
       .select()
       .from(credentials)
@@ -87,6 +107,7 @@ export class AuthService {
     const userId = await this.db.transaction(async (tx) => {
       const newUser = {
         name,
+        email,
         birthday,
         profileImageId,
       };
@@ -198,6 +219,9 @@ export class AuthService {
     });
   }
 
+  /**
+   * 비밀번호 확인
+   */
   async verifyPassword(id: string, password: string): Promise<boolean> {
     const [credential] = await this.db
       .select()
@@ -222,21 +246,108 @@ export class AuthService {
     }
 
     const saltRounds = parseInt(this.configService.get<string>('SALT_ROUNDS'));
+
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-    await this.db
-      .update(credentials)
-      .set({ password: hashedPassword })
-      .where(eq(credentials.id, id));
-
     const accessToken = await this.createAccessToken(id);
+
     const refreshToken = this.createRefreshToken(id);
 
+    const data = {
+      password: hashedPassword,
+      refreshToken,
+      updatedAt: new Date(),
+    };
+
     await this.db
       .update(credentials)
-      .set({ refreshToken })
+      .set(data)
       .where(eq(credentials.userId, id));
 
     return { accessToken, refreshToken };
+  }
+
+  /**
+   * 비밀번호 재설정
+   */
+  async forgotPassword(id: string, email: string): Promise<void> {
+    const [record] = await this.db
+      .select({
+        userId: schema.users.id,
+        name: schema.users.name,
+        email: schema.users.email,
+      })
+      .from(schema.credentials)
+      .innerJoin(schema.users, eq(schema.credentials.userId, schema.users.id))
+      .where(eq(schema.credentials.id, id));
+
+    if (!record || record.email !== email) {
+      throw new NotFoundException(
+        '해당 id와 email의 사용자를 찾을 수 없습니다.',
+      );
+    }
+
+    const resetToken = this.generatePasswordResetToken(record.userId);
+
+    await this.sendPasswordResetEmail(record.email, record.name, resetToken);
+  }
+
+  /**
+   * 비밀번호 재설정 토큰 생성
+   */
+  private generatePasswordResetToken(userId: string): string {
+    const expiresIn = '30m';
+    const payload = { sub: userId, type: 'password_reset' };
+
+    return this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn,
+    });
+  }
+
+  private async sendPasswordResetEmail(
+    email: string,
+    name: string,
+    resetToken: string,
+  ): Promise<void> {
+    const host = this.configService.get<string>('HOST');
+    const port = this.configService.get<string>('PORT');
+
+    const resetLink = `http://${host}:${port}/api/auth/password/reset?token=${resetToken}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: '비밀번호 재설정 안내',
+      template: './../../../../../src/templates/reset_password',
+      context: {
+        name,
+        resetLink,
+      },
+    });
+  }
+
+  async validatePasswordResetToken(token: string): Promise<string> {
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      });
+
+      if (payload.type !== 'password_reset') {
+        throw new UnauthorizedException('유효하지 않은 토큰 타입입니다.');
+      }
+
+      return payload.sub;
+    } catch (error) {
+      throw new UnauthorizedException('유효하지 않거나 만료된 토큰입니다.');
+    }
+  }
+
+  async resetPasswordWithToken(
+    token: string,
+    newPassword: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const userId = await this.validatePasswordResetToken(token);
+
+    return this.resetPassword(userId, newPassword);
   }
 }

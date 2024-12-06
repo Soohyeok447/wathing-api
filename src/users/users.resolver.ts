@@ -98,11 +98,12 @@ export class UsersResolver {
   @UseGuards(GqlAuthGuard)
   async updateUser(
     @Args('input')
-    { name, birthday, statusMessage, profileImageId }: UpdateUserDto,
+    { name, email, birthday, statusMessage, profileImageId }: UpdateUserDto,
     @CurrentUser() currentUser: User,
   ): Promise<User> {
     return this.usersService.updateUser(currentUser.id, {
       name,
+      email,
       birthday,
       statusMessage,
       profileImageId,

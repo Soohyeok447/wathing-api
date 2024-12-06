@@ -13,3 +13,9 @@ export function isDateString(value: unknown): value is string {
 export function isEmptyString(value: unknown): boolean {
   return isString(value) && value.trim() === '';
 }
+
+export function isEmail(value: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return emailRegex.test(value);
+}
