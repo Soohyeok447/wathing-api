@@ -21,6 +21,7 @@ import { CommentsService } from '../comments/comments.service';
 import { CurrentUser } from '../core/decorators/current_user.decorator';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
 import { UseGuards } from '@nestjs/common';
+import { BlockStoryInput } from './dtos/block_story.dto';
 
 @Resolver(() => Story)
 export class StoryResolver {
@@ -163,6 +164,36 @@ export class StoryResolver {
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
     await this.storyService.dislikeStory(storyId, currentUser.id);
+    return true;
+  }
+
+  /**
+   * 스토리를 차단합니다.
+   * 관리자 권한이 필요합니다.
+   */
+  @Mutation(() => Boolean, { description: '스토리를 차단합니다.' })
+  @UseGuards(GqlAuthGuard)
+  async blockStory(
+    @Args('input') input: BlockStoryInput,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.storyService.blockStory(input.storyId, currentUser.id);
+
+    return true;
+  }
+
+  /**
+   * 스토리 차단을 해제합니다.
+   * 관리자 권한이 필요합니다.
+   */
+  @Mutation(() => Boolean, { description: '스토리 차단을 해제합니다.' })
+  @UseGuards(GqlAuthGuard)
+  async unblockStory(
+    @Args('input') input: BlockStoryInput,
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.storyService.unblockStory(input.storyId, currentUser.id);
+
     return true;
   }
 }

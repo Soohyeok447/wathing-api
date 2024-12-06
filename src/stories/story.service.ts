@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -10,9 +11,9 @@ import { UsersService } from '../users/users.service';
 import { FilesService } from '../files/files.service';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from './../data/schema';
-import { comments, stories, storyLikes } from './../data/schema';
+import { comments, stories, storyBlocks, storyLikes } from './../data/schema';
 import { storyFiles as storyFilesTable } from './../data/schema';
-import { eq, desc, and, like } from 'drizzle-orm';
+import { eq, desc, and, like, isNull } from 'drizzle-orm';
 import { isEmptyString } from '../utils/type_gurad';
 import { StoryFile } from './types/story_file.type';
 import { UpdateStoryDto } from './dtos/update_story.dto';
@@ -36,6 +37,10 @@ export class StoryService {
 
     if (!story) {
       throw new NotFoundException('스토리를 찾을 수 없습니다.');
+    }
+
+    if (await this.isStoryBlocked(id)) {
+      throw new BadRequestException('차단된 스토리입니다.');
     }
 
     return story;
@@ -74,6 +79,8 @@ export class StoryService {
     const storiesData = await this.db
       .select()
       .from(stories)
+      .leftJoin(storyBlocks, eq(stories.id, storyBlocks.storyId))
+      .where(isNull(storyBlocks.id))
       .orderBy(desc(stories.createdAt))
       .limit(limit + 1)
       .offset(offset);
@@ -81,10 +88,20 @@ export class StoryService {
     const hasNextPage = storiesData.length > limit;
     const edges = hasNextPage ? storiesData.slice(0, -1) : storiesData;
 
+    const mapped = edges.map((e) => {
+      return {
+        id: e.stories.id,
+        userId: e.stories.userId,
+        content: e.stories.content,
+        createdAt: e.stories.createdAt,
+        updatedAt: e.stories.updatedAt,
+      };
+    });
+
     const nextOffset = offset + limit;
 
     return {
-      edges,
+      edges: mapped,
       hasNextPage,
       nextOffset: hasNextPage ? nextOffset : null,
     };
@@ -104,7 +121,8 @@ export class StoryService {
     const userStoriesData = await this.db
       .select()
       .from(stories)
-      .where(eq(stories.userId, userId))
+      .leftJoin(storyBlocks, eq(stories.id, storyBlocks.storyId))
+      .where(and(isNull(storyBlocks.id), eq(stories.userId, userId)))
       .orderBy(desc(stories.createdAt))
       .limit(limit + 1)
       .offset(offset);
@@ -112,10 +130,20 @@ export class StoryService {
     const hasNextPage = userStoriesData.length > limit;
     const edges = hasNextPage ? userStoriesData.slice(0, -1) : userStoriesData;
 
+    const mapped = edges.map((e) => {
+      return {
+        id: e.stories.id,
+        userId: e.stories.userId,
+        content: e.stories.content,
+        createdAt: e.stories.createdAt,
+        updatedAt: e.stories.updatedAt,
+      };
+    });
+
     const nextOffset = hasNextPage ? offset + limit : null;
 
     return {
-      edges,
+      edges: mapped,
       hasNextPage,
       nextOffset,
     };
@@ -347,5 +375,78 @@ export class StoryService {
       .where(like(stories.content, searchPattern));
 
     return searchedStories;
+  }
+
+  /**
+   * 스토리를 차단합니다.
+   * @param storyId 스토리 ID
+   * @param adminId 관리자 ID
+   */
+  async blockStory(storyId: string, adminId: string): Promise<void> {
+    const adminUser = await this.usersService.findById(adminId);
+
+    if (!adminUser || !adminUser.isAdmin) {
+      throw new ForbiddenException('관리자 권한이 필요합니다.');
+    }
+
+    const story = await this.findStoryById(storyId);
+
+    if (!story) {
+      throw new NotFoundException('스토리를 찾을 수 없습니다.');
+    }
+
+    const [existingBlock] = await this.db
+      .select()
+      .from(storyBlocks)
+      .where(
+        and(
+          eq(storyBlocks.storyId, storyId),
+          eq(storyBlocks.blockedBy, adminId),
+        ),
+      );
+
+    if (existingBlock) {
+      throw new BadRequestException('이미 차단된 스토리입니다.');
+    }
+
+    await this.db.insert(storyBlocks).values({
+      storyId,
+      blockedBy: adminId,
+    });
+  }
+
+  /**
+   * 스토리를 차단 해제합니다.
+   * @param storyId 스토리 ID
+   * @param adminId 관리자 ID
+   */
+  async unblockStory(storyId: string, adminId: string): Promise<void> {
+    const adminUser = await this.usersService.findById(adminId);
+
+    if (!adminUser || !adminUser.isAdmin) {
+      throw new ForbiddenException('관리자 권한이 필요합니다.');
+    }
+
+    await this.db
+      .delete(storyBlocks)
+      .where(
+        and(
+          eq(storyBlocks.storyId, storyId),
+          eq(storyBlocks.blockedBy, adminId),
+        ),
+      );
+  }
+
+  /**
+   * 스토리가 차단되었는지 확인합니다.
+   * @param storyId 스토리 ID
+   */
+  async isStoryBlocked(storyId: string): Promise<boolean> {
+    const [blocks] = await this.db
+      .select()
+      .from(storyBlocks)
+      .where(eq(storyBlocks.storyId, storyId));
+
+    return !!blocks;
   }
 }

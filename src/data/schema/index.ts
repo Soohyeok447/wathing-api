@@ -13,3 +13,4 @@ export * from './friend_request';
 export * from './chat_request';
 export * from './notification';
 export * from './subscription';
+export * from './story_block';

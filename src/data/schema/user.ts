@@ -1,4 +1,11 @@
-import { pgTable, varchar, uuid, timestamp, text } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  varchar,
+  uuid,
+  timestamp,
+  text,
+  boolean,
+} from 'drizzle-orm/pg-core';
 import { InferInsertModel, InferSelectModel } from 'drizzle-orm';
 import { files } from '.';
 
@@ -11,6 +18,7 @@ export const users = pgTable('users', {
   profileImageId: uuid('profile_image_id').references(() => files.id, {
     onDelete: 'set null',
   }),
+  isAdmin: boolean('is_admin').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at'),
 });
