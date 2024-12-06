@@ -313,7 +313,8 @@ export class AuthService {
     const host = this.configService.get<string>('HOST');
     const port = this.configService.get<string>('PORT');
 
-    const resetLink = `http://${host}:${port}/api/auth/password/reset?token=${resetToken}`;
+    // const resetLink = `http://${host}:${port}/api/auth/password/reset?token=${resetToken}`;
+    const resetLink = `http://localhost:3000/api/auth/password/reset?token=${resetToken}`;
 
     await this.mailerService.sendMail({
       to: email,
