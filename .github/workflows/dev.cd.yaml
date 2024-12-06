@@ -56,7 +56,10 @@ jobs:
             -e S3_BUCKET_NAME=${{ secrets.DEV_S3_BUCKET_NAME }} \
             -e CDN_DOMAIN=${{ secrets.DEV_CDN_DOMAIN }} \
             -e SALT_ROUNDS=${{ secrets.DEV_SALT_ROUNDS }} \
-            -e FIREBASE_SERVICE_ACCOUNT_KEY=${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }} \
+            -e MAIL_HOST=${{ secrets.MAIL_HOST }} \
+            -e MAIL_PORT=${{ secrets.MAIL_PORT }} \
+            -e MAIL_USER=${{ secrets.MAIL_USER }} \
+            -e MAIL_PASS=${{ secrets.MAIL_PASS }} \
             ${{ secrets.DOCKER_USERNAME }}/wathing-api-dev:latest
 
       - name: Delete Dangling Images
