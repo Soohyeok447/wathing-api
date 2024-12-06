@@ -317,7 +317,7 @@ export class AuthService {
 
     await this.mailerService.sendMail({
       to: email,
-      subject: '비밀번호 재설정 안내',
+      subject: '[Wathing] 비밀번호 재설정 안내',
       template: './../../../../../src/templates/reset_password',
       context: {
         name,
