@@ -322,15 +322,6 @@ export class UsersService {
       if (!isEmail(email)) {
         throw new BadRequestException('유효한 이메일 형식이 아닙니다.');
       }
-
-      const [existingEmailUser] = await this.db
-        .select()
-        .from(users)
-        .where(eq(users.email, email));
-
-      if (existingEmailUser) {
-        throw new ConflictException('이미 가입된 이메일입니다.');
-      }
     }
 
     const updateData: Partial<User> = {
