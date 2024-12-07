@@ -38,6 +38,9 @@ export class User {
   })
   isSubscribed?: boolean;
 
+  @Field({ description: '이메일' })
+  email: string;
+
   @Field({ description: '생성된 날짜' })
   createdAt: Date;
 
