@@ -196,4 +196,16 @@ export class StoryResolver {
 
     return true;
   }
+
+  @Query(() => StoryConnection, {
+    description: '차단된 스토리 목록을 조회합니다.',
+  })
+  @UseGuards(GqlAuthGuard)
+  async blockedStories(
+    @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
+    @Args('offset', { type: () => Int, defaultValue: 0 }) offset: number,
+    @CurrentUser() currentUser: User,
+  ): Promise<StoryConnection> {
+    return this.storyService.getBlockedStories(currentUser.id, limit, offset);
+  }
 }

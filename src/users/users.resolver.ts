@@ -240,4 +240,28 @@ export class UsersResolver {
     await this.usersService.updateDeviceToken(currentUser.id, deviceToken);
     return true;
   }
+
+  @Mutation(() => Boolean, { description: '사용자를 차단합니다.' })
+  @UseGuards(GqlAuthGuard)
+  async blockUser(
+    @Args('input') input: { targetUserId: string },
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.usersService.blockUser(currentUser.id, input.targetUserId);
+    return true;
+  }
+
+  /**
+   * 사용자의 차단을 해제합니다.
+   * 관리자 전용
+   */
+  @Mutation(() => Boolean, { description: '사용자 차단을 해제합니다.' })
+  @UseGuards(GqlAuthGuard)
+  async unblockUser(
+    @Args('input') input: { targetUserId: string },
+    @CurrentUser() currentUser: User,
+  ): Promise<boolean> {
+    await this.usersService.unblockUser(currentUser.id, input.targetUserId);
+    return true;
+  }
 }

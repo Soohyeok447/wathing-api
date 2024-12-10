@@ -14,3 +14,4 @@ export * from './chat_request';
 export * from './notification';
 export * from './subscription';
 export * from './story_block';
+export * from './user_block';

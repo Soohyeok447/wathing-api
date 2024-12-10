@@ -449,4 +449,52 @@ export class StoryService {
 
     return !!blocks;
   }
+
+  /**
+   * 차단된 스토리를 조회합니다. 관리자 전용.
+   * @param adminId 관리자 ID
+   * @param limit 페이지네이션 제한
+   * @param offset 페이지네이션 오프셋
+   */
+  async getBlockedStories(
+    adminId: string,
+    limit: number,
+    offset: number,
+  ): Promise<StoryConnection> {
+    const adminUser = await this.usersService.findById(adminId);
+
+    if (!adminUser || !adminUser.isAdmin) {
+      throw new ForbiddenException('관리자 권한이 필요합니다.');
+    }
+
+    const blockedStoriesData = await this.db
+      .select()
+      .from(stories)
+      .leftJoin(storyBlocks, eq(stories.id, storyBlocks.storyId))
+      .where(eq(storyBlocks.storyId, null))
+      .orderBy(desc(stories.createdAt))
+      .limit(limit + 1)
+      .offset(offset);
+
+    const hasNextPage = blockedStoriesData.length > limit;
+    const edges = hasNextPage
+      ? blockedStoriesData.slice(0, -1)
+      : blockedStoriesData;
+
+    const mapped = edges.map((e) => ({
+      id: e.stories.id,
+      userId: e.stories.userId,
+      content: e.stories.content,
+      createdAt: e.stories.createdAt,
+      updatedAt: e.stories.updatedAt,
+    }));
+
+    const nextOffset = offset + limit;
+
+    return {
+      edges: mapped,
+      hasNextPage,
+      nextOffset: hasNextPage ? nextOffset : null,
+    };
+  }
 }

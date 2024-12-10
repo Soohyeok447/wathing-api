@@ -4,9 +4,16 @@ import {
   BadRequestException,
   NotFoundException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { credentials, subscriptions, User, users } from '../data/schema';
+import {
+  credentials,
+  subscriptions,
+  User,
+  userBlocks,
+  users,
+} from '../data/schema';
 import * as schema from '../data/schema';
 import { eq, inArray, and, or, like } from 'drizzle-orm';
 import { isDateString, isEmail, isEmptyString } from '../utils/type_gurad';
@@ -536,5 +543,71 @@ export class UsersService {
       .where(eq(credentials.userId, userId));
 
     return credential || null;
+  }
+
+  /**
+   * 사용자를 차단합니다.
+   * @param adminId 차단을 수행하는 관리자 ID
+   * @param targetUserId 차단할 사용자 ID
+   */
+  async blockUser(adminId: string, targetUserId: string): Promise<void> {
+    const adminUser = await this.findById(adminId);
+
+    if (!adminUser || !adminUser.isAdmin) {
+      throw new ForbiddenException('관리자 권한이 필요합니다.');
+    }
+
+    const targetUser = await this.findById(targetUserId);
+
+    if (!targetUser) {
+      throw new NotFoundException('차단할 사용자를 찾을 수 없습니다.');
+    }
+
+    const [existingBlock] = await this.db
+      .select()
+      .from(userBlocks)
+      .where(
+        and(
+          eq(userBlocks.blockedUserId, targetUserId),
+          eq(userBlocks.blockedBy, adminId),
+        ),
+      );
+
+    if (existingBlock) {
+      throw new BadRequestException('이미 차단된 사용자입니다.');
+    }
+
+    await this.db.insert(userBlocks).values({
+      blockedUserId: targetUserId,
+      blockedBy: adminId,
+    });
+  }
+
+  /**
+   * 사용자의 차단을 해제합니다.
+   * @param adminId 차단을 해제하는 관리자 ID
+   * @param targetUserId 차단 해제할 사용자 ID
+   */
+  async unblockUser(adminId: string, targetUserId: string): Promise<void> {
+    const adminUser = await this.findById(adminId);
+
+    if (!adminUser || !adminUser.isAdmin) {
+      throw new ForbiddenException('관리자 권한이 필요합니다.');
+    }
+
+    const targetUser = await this.findById(targetUserId);
+
+    if (!targetUser) {
+      throw new NotFoundException('차단 해제할 사용자를 찾을 수 없습니다.');
+    }
+
+    await this.db
+      .delete(userBlocks)
+      .where(
+        and(
+          eq(userBlocks.blockedUserId, targetUserId),
+          eq(userBlocks.blockedBy, adminId),
+        ),
+      );
   }
 }
