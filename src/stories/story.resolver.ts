@@ -33,7 +33,7 @@ export class StoryResolver {
   ) {}
 
   @Query(() => Story, { description: '스토리 조회' })
-  @UseGuards(NotBlockedGuard)
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async story(
     @Args('id', { type: () => ID, description: '스토리 ID' }) id: string,
   ): Promise<Story> {
