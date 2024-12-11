@@ -22,6 +22,7 @@ import { CurrentUser } from '../core/decorators/current_user.decorator';
 import { GqlAuthGuard } from '../core/guards/gql.guard';
 import { UseGuards } from '@nestjs/common';
 import { BlockStoryInput } from './dtos/block_story.dto';
+import { NotBlockedGuard } from '../core/decorators/not_blocked.decorator';
 
 @Resolver(() => Story)
 export class StoryResolver {
@@ -32,6 +33,7 @@ export class StoryResolver {
   ) {}
 
   @Query(() => Story, { description: '스토리 조회' })
+  @UseGuards(NotBlockedGuard)
   async story(
     @Args('id', { type: () => ID, description: '스토리 ID' }) id: string,
   ): Promise<Story> {
@@ -39,22 +41,31 @@ export class StoryResolver {
   }
 
   @Query(() => StoryConnection, { description: '스토리 목록 조회' })
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async stories(
     @Args('limit', { type: () => Int, nullable: true, defaultValue: 5 })
     limit: number,
     @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
     offset: number,
+    @CurrentUser() currentUser: User,
   ): Promise<StoryConnection> {
-    return this.storyService.getStories(limit, offset);
+    return this.storyService.getStories(limit, offset, currentUser.id);
   }
 
   @Query(() => [Story], { description: '스토리 검색' })
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async searchStories(
     @Args('query', { type: () => String }) query: string,
     @Args('limit', { type: () => Int, defaultValue: 10 }) limit: number,
     @Args('offset', { type: () => Int, defaultValue: 0 }) offset: number,
+    @CurrentUser() currentUser: User,
   ): Promise<Story[]> {
-    return this.storyService.searchStories(query, limit, offset);
+    return this.storyService.searchStories(
+      query,
+      limit,
+      offset,
+      currentUser.id,
+    );
   }
 
   /**
@@ -64,14 +75,21 @@ export class StoryResolver {
   @Query(() => StoryConnection, {
     description: '사용자의 스토리 목록 조회',
   })
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async userStories(
     @Args('userId', { type: () => ID }) userId: string,
     @Args('limit', { type: () => Int, nullable: true, defaultValue: 5 })
     limit: number,
     @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
     offset: number,
+    @CurrentUser() currentUser: User,
   ): Promise<StoryConnection> {
-    return this.storyService.findStoriesByUserId(userId, limit, offset);
+    return this.storyService.findStoriesByUserId(
+      userId,
+      limit,
+      offset,
+      currentUser.id,
+    );
   }
 
   @ResolveField(() => UserEntity, { description: '스토리를 작성한 사용자' })
@@ -108,7 +126,7 @@ export class StoryResolver {
   @ResolveField(() => Boolean, {
     description: '사용자가 해당 스토리에 좋아요를 눌렀는지 여부',
   })
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async hasLiked(
     @Parent() story: Story,
     @CurrentUser() currentUser: User,
@@ -117,7 +135,7 @@ export class StoryResolver {
   }
 
   @Mutation(() => Story, { description: '새로운 스토리를 생성.' })
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async createStory(
     @Args('input') { content, files }: CreateStoryDto,
     @CurrentUser() currentUser: User,
@@ -126,7 +144,7 @@ export class StoryResolver {
   }
 
   @Mutation(() => Story, { description: '스토리 업데이트' })
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async updateStory(
     @Args('input') { id, content, files }: UpdateStoryDto,
     @CurrentUser() currentUser: User,
@@ -139,7 +157,7 @@ export class StoryResolver {
   }
 
   @Mutation(() => Boolean, { description: '스토리를 삭제' })
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async deleteStory(
     @Args('id', { type: () => ID, description: '스토리 ID' }) id: string,
     @CurrentUser() currentUser: User,
@@ -148,7 +166,7 @@ export class StoryResolver {
   }
 
   @Mutation(() => Boolean, { description: '스토리에 좋아요 누르기' })
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async likeStory(
     @Args('storyId', { type: () => ID }) storyId: string,
     @CurrentUser() currentUser: User,
@@ -158,7 +176,7 @@ export class StoryResolver {
   }
 
   @Mutation(() => Boolean, { description: '스토리에 좋아요 취소하기' })
-  @UseGuards(GqlAuthGuard)
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async dislikeStory(
     @Args('storyId', { type: () => ID }) storyId: string,
     @CurrentUser() currentUser: User,
@@ -169,7 +187,6 @@ export class StoryResolver {
 
   /**
    * 스토리를 차단합니다.
-   * 관리자 권한이 필요합니다.
    */
   @Mutation(() => Boolean, { description: '스토리를 차단합니다.' })
   @UseGuards(GqlAuthGuard)
@@ -184,7 +201,6 @@ export class StoryResolver {
 
   /**
    * 스토리 차단을 해제합니다.
-   * 관리자 권한이 필요합니다.
    */
   @Mutation(() => Boolean, { description: '스토리 차단을 해제합니다.' })
   @UseGuards(GqlAuthGuard)

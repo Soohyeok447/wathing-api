@@ -19,6 +19,8 @@ import { forwardRef, Inject, UseGuards } from '@nestjs/common';
 import { StoryConnection } from '../stories/types/story_connection.type';
 import { StoryService } from '../stories/story.service';
 import { RoomsService } from '../rooms/rooms.service';
+import { BlockUserInput } from './dtos/block_user.dto';
+import { NotBlockedGuard } from '../core/decorators/not_blocked.decorator';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -167,14 +169,21 @@ export class UsersResolver {
     description: '사용자의 스토리 목록',
     nullable: true,
   })
+  @UseGuards(GqlAuthGuard, NotBlockedGuard)
   async stories(
     @Parent() user: User,
     @Args('limit', { type: () => Int, nullable: true, defaultValue: 5 })
     limit: number,
     @Args('offset', { type: () => Int, nullable: true, defaultValue: 0 })
     offset: number,
+    @CurrentUser() currentUser: User,
   ): Promise<StoryConnection> {
-    return this.storyService.findStoriesByUserId(user.id, limit, offset);
+    return this.storyService.findStoriesByUserId(
+      user.id,
+      limit,
+      offset,
+      currentUser.id,
+    );
   }
 
   @Mutation(() => Boolean, { description: '사용자 구독하기' })
@@ -244,7 +253,7 @@ export class UsersResolver {
   @Mutation(() => Boolean, { description: '사용자를 차단합니다.' })
   @UseGuards(GqlAuthGuard)
   async blockUser(
-    @Args('input') input: { targetUserId: string },
+    @Args('input') input: BlockUserInput,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
     await this.usersService.blockUser(currentUser.id, input.targetUserId);
@@ -258,7 +267,7 @@ export class UsersResolver {
   @Mutation(() => Boolean, { description: '사용자 차단을 해제합니다.' })
   @UseGuards(GqlAuthGuard)
   async unblockUser(
-    @Args('input') input: { targetUserId: string },
+    @Args('input') input: BlockUserInput,
     @CurrentUser() currentUser: User,
   ): Promise<boolean> {
     await this.usersService.unblockUser(currentUser.id, input.targetUserId);

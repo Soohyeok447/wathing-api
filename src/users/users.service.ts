@@ -32,6 +32,19 @@ export class UsersService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
+  /**
+   * 특정 사용자가 차단한 사용자 ID 목록을 가져옵니다.
+   * @param userId 사용자 ID
+   */
+  async getBlockedUserIds(userId: string): Promise<string[]> {
+    const blocks = await this.db
+      .select()
+      .from(userBlocks)
+      .where(eq(userBlocks.blockedBy, userId));
+
+    return blocks.map((block) => block.blockedUserId);
+  }
+
   async findById(id: string): Promise<User | undefined> {
     const [result] = await this.db.select().from(users).where(eq(users.id, id));
 
@@ -609,5 +622,18 @@ export class UsersService {
           eq(userBlocks.blockedBy, adminId),
         ),
       );
+  }
+
+  /**
+   * 특정 사용자가 차단되었는지 확인합니다.
+   * @param userId 확인할 사용자 ID
+   */
+  async isUserBlocked(userId: string): Promise<boolean> {
+    const [blocked] = await this.db
+      .select()
+      .from(userBlocks)
+      .where(eq(userBlocks.blockedUserId, userId));
+
+    return !!blocked;
   }
 }
