@@ -260,10 +260,6 @@ export class UsersResolver {
     return true;
   }
 
-  /**
-   * 사용자의 차단을 해제합니다.
-   * 관리자 전용
-   */
   @Mutation(() => Boolean, { description: '사용자 차단을 해제합니다.' })
   @UseGuards(GqlAuthGuard)
   async unblockUser(
@@ -272,5 +268,17 @@ export class UsersResolver {
   ): Promise<boolean> {
     await this.usersService.unblockUser(currentUser.id, input.targetUserId);
     return true;
+  }
+
+  /**
+   * 현재 사용자가 차단한 사용자 목록을 조회합니다.
+   */
+  @Query(() => [User], {
+    name: 'blockedUsers',
+    description: '차단한 사용자 목록 조회',
+  })
+  @UseGuards(GqlAuthGuard)
+  async blockedUsers(@CurrentUser() currentUser: User): Promise<User[]> {
+    return this.usersService.getBlockedUsers(currentUser.id);
   }
 }

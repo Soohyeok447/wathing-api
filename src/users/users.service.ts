@@ -636,4 +636,23 @@ export class UsersService {
 
     return !!blocked;
   }
+
+  /**
+   * 현재 사용자가 차단한 사용자 목록을 가져옵니다.
+   * @param userId 사용자 ID
+   */
+  async getBlockedUsers(userId: string): Promise<User[]> {
+    const blockedUserIds = await this.getBlockedUserIds(userId);
+
+    if (blockedUserIds.length === 0) {
+      return [];
+    }
+
+    const blockedUsers = await this.db
+      .select()
+      .from(users)
+      .where(inArray(users.id, blockedUserIds));
+
+    return blockedUsers;
+  }
 }
