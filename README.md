@@ -2,8 +2,7 @@
 
 ## 프로젝트 소개
 
-**와씽(Wathing)** 은 스토리 공유, 실시간 채팅, 소셜 네트워킹을 제공하는 소셜 미디어 플랫폼입니다. 
-
+**와씽(Wathing)** 은 스토리 공유, 실시간 채팅, 소셜 네트워킹을 제공하는 소셜 미디어 플랫폼입니다. <br>
 사용자들이 일상의 순간을 스토리로 공유하고, 실시간 메시징을 통해 소통하며, 친구 및 구독 시스템을 통해 의미 있는 관계를 형성할 수 있는 소셜 플랫폼을 목표로 했습니다.
 
 ## 사용한 기술
@@ -26,16 +25,13 @@
 - **Docker & Drizzle Kit**: 컨테이너화를 통해 API 서버 배포 및 스키마 마이그레이션을 효율적으로 관리
 
 ## ERD
-
-(이미지)
+<img width="1451" height="805" alt="Wathing" src="https://github.com/user-attachments/assets/4ed4705e-4368-4997-a3dc-e7861093633e" />
 
 ## 시스템 아키텍쳐
-
-(이미지)
+<img width="2435" height="2823" alt="Wathing" src="https://github.com/user-attachments/assets/c5545d81-d5fd-4618-a7f4-73ce260762e4" />
 
 ## WAS 아키텍쳐
-
-(이미지)
+<img width="711" height="831" alt="Wathing" src="https://github.com/user-attachments/assets/3ebc73f4-92f9-4d72-80fe-7d522b31ae6f" />
 
 ## 핵심 기능
 
@@ -155,10 +151,7 @@ NestJS의 **도메인 기반 폴더 구조**는 초기 개발 속도와 로직�
 
 ### **전체 요약 & 회고**
 
-`Wathing`은 NestJS와 PostgreSQL, Drizzle ORM 조합을 통해 타입세이프한 백엔드를 구현하며 실시간 SNS의 핵심 기능을 빠른 주기로 개발한 프로젝트였습니다. 
-
-가장 큰 성과는 **GraphQL을 도입하여 REST API의 비효율을 해결하고 프론트엔드 개발 효율을 향상**한 경험입니다. 
-
-Subscription을 활용해 실시간 데이터 전송까지 하나의 기술 스택으로 통합하면서, 복잡한 요구사항을 단순하고 일관된 방식으로 해결하는 능력을 길렀습니다. 
-
+`Wathing`은 NestJS와 PostgreSQL, Drizzle ORM를 통해 타입세이프한 백엔드를 구현하며 실시간 SNS의 핵심 기능을 빠른 주기로 개발한 프로젝트였습니다. <br>
+가장 큰 성과는 **GraphQL을 도입하여 REST API의 비효율을 해결하고 프론트엔드 개발 효율을 향상**한 경험입니다. <br>
+Subscription을 활용해 실시간 데이터 전송까지 하나의 기술 스택으로 통합하면서, 복잡한 요구사항을 단순하고 일관된 방식으로 해결하는 능력을 길렀습니다. <br>
 또한, CI/CD 파이프라인과 AWS 인프라를 직접 구축하며 1인 백엔드 개발자로서 프로젝트를 책임지는 엔드투엔드 역량을 강화할 수 있었습니다.
