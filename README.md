@@ -1,9 +1,20 @@
 # 와씽 (Wathing)
 
 ## 프로젝트 소개
-
 **와씽(Wathing)** 은 스토리 공유, 실시간 채팅, 소셜 네트워킹을 제공하는 소셜 미디어 플랫폼입니다. <br>
 사용자들이 일상의 순간을 스토리로 공유하고, 실시간 메시징을 통해 소통하며, 친구 및 구독 시스템을 통해 의미 있는 관계를 형성할 수 있는 소셜 플랫폼을 목표로 했습니다.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/2f3a4c0e-f45d-4d3e-b0b7-c630695a6077" width="19%">
+  &nbsp;
+  <img src="https://github.com/user-attachments/assets/8922520b-4c42-45af-a508-157bba49d609" width="19%">
+  &nbsp;
+  <img src="https://github.com/user-attachments/assets/b61fbb43-09d6-4c6f-a2c5-67a742348f55" width="19%">
+  &nbsp;
+  <img src="https://github.com/user-attachments/assets/c78352cb-20da-4b81-a388-5a9cc77ef133" width="19%">
+</p>
+
+<br>
 
 ## 사용한 기술
 ### 개발
@@ -25,13 +36,13 @@
 - **Docker & Drizzle Kit**: 컨테이너화를 통해 API 서버 배포 및 스키마 마이그레이션을 효율적으로 관리
 
 ## ERD
-<img width="1451" height="805" alt="Wathing" src="https://github.com/user-attachments/assets/4ed4705e-4368-4997-a3dc-e7861093633e" />
+<img width="1000" height="600" alt="Wathing" src="https://github.com/user-attachments/assets/4ed4705e-4368-4997-a3dc-e7861093633e" />
 
 ## 시스템 아키텍쳐
-<img width="2435" height="2823" alt="Wathing" src="https://github.com/user-attachments/assets/c5545d81-d5fd-4618-a7f4-73ce260762e4" />
+<img width="835" height="1123" alt="Wathing" src="https://github.com/user-attachments/assets/c5545d81-d5fd-4618-a7f4-73ce260762e4" />
 
 ## WAS 아키텍쳐
-<img width="711" height="831" alt="Wathing" src="https://github.com/user-attachments/assets/3ebc73f4-92f9-4d72-80fe-7d522b31ae6f" />
+<img width="611" height="731" alt="Wathing" src="https://github.com/user-attachments/assets/3ebc73f4-92f9-4d72-80fe-7d522b31ae6f" />
 
 ## 핵심 기능
 
