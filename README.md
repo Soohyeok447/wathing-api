@@ -1,73 +1,164 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# 와씽 (Wathing)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 프로젝트 소개
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+**와씽(Wathing)** 은 스토리 공유, 실시간 채팅, 소셜 네트워킹을 제공하는 소셜 미디어 플랫폼입니다. 
 
-## Description
+사용자들이 일상의 순간을 스토리로 공유하고, 실시간 메시징을 통해 소통하며, 친구 및 구독 시스템을 통해 의미 있는 관계를 형성할 수 있는 소셜 플랫폼을 목표로 했습니다.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 사용한 기술
+### 개발
+- **NestJS**: 비즈니스 요구사항이 복잡했고 높은 유지보수성이 중요했기 때문에 사용
+- **GraphQL**: 필요한 데이터만 효율적으로 전달하는 유연한 API 제공과 실시간 알림/메시징 기능을 구현하기 위해 사용
+- **Drizzle ORM**: 타입 안전한 쿼리 작성과 간편한 SQL 메서드 체이닝으로 효율적인 데이터 관리를 가능하게 하기 위해 사용
+- **Firebase Messaging**: 채팅, 새 스토리 푸시 알림 발송을 위해 사용
+- **Nodemailer**: 비밀번호 재설정 기능 구현을 위해 메일 발송 모듈을 구현
 
-## Installation
+### DB
+- **PostgreSQL**: SQL 기반의 명확한 스키마 정의와 마이그레이션으로 관계형 데이터 무결성을 유지하기 위해 사용
 
-```bash
-$ npm install
+### 인프라
+- **AWS Lightsail**: 가볍지만 개발에 문제없고 저렴한 Lightsail 서버를 사용
+- **AWS S3 & CloudFront**: 프로필 이미지, 스토리 사진/동영상을 S3에 저장하고 CloudFront 캐싱을 통해 리소스를 빠르게 제공
+
+### CI/CD
+- **GitHub Actions**: 코드 빌드, 마이그레이션, Docker 이미지 빌드 및 배포 파이프라인을 자동화
+- **Docker & Drizzle Kit**: 컨테이너화를 통해 API 서버 배포 및 스키마 마이그레이션을 효율적으로 관리
+
+## ERD
+
+(이미지)
+
+## 시스템 아키텍쳐
+
+(이미지)
+
+## WAS 아키텍쳐
+
+(이미지)
+
+## 핵심 기능
+
+### 사용자 관리 시스템
+- **인증/인가**: JWT 기반 토큰 시스템, Google/Kakao OAuth 소셜 로그인
+- **사용자 프로필**: 프로필 이미지, 상태 메시지, 개인정보 관리
+- **친구 시스템**: 친구 추가/삭제, 친구 목록 관리
+- **구독 기능**: 다른 사용자 구독/구독 해제, 구독자/구독 중 관리
+- **사용자 차단**: 원하지 않는 사용자 차단 및 해제 기능
+
+### 스토리 시스템
+- **스토리 생성**: 이미지/동영상 첨부가 가능한 스토리 작성
+- **스토리 상호작용**: 좋아요, 댓글 기능
+- **스토리 관리**: 본인 스토리 수정/삭제, 타인 스토리 차단
+- **파일 첨부**: AWS S3를 통한 미디어 파일 업로드 및 관리
+
+### 실시간 커뮤니케이션
+- **실시간 메시징**: GraphQL Subscription을 활용한 실시간 채팅
+- **채팅방 관리**: 1:1 및 그룹 채팅방 생성/관리
+- **메시지 타입**: 텍스트, 이미지, 이모지 메시지 지원
+- **채팅방 참여**: 사용자 초대/나가기 기능
+
+### 알림 시스템
+- **푸시 알림**: Firebase FCM을 활용한 실시간 푸시 알림
+- **알림 관리**: 알림 목록 조회, 읽음 처리, 삭제
+- **이벤트 기반**: 친구 요청, 댓글, 메시지 등 다양한 이벤트 알림
+
+### 소셜 기능
+- **이모지 시스템**: 커스텀 이모지 업로드 및 사용
+- **친구 요청**: 친구 추가 요청 및 응답 시스템
+- **채팅 요청**: 채팅 시작 요청 및 수락/거절
+
+
+
+## 아키텍처 특징
+
+### 모듈화된 NestJS 아키텍처
+- **도메인 기반 모듈 설계**: 각 기능별로 독립적인 모듈로 구성하여 확장성과 유지보수성 확보
+- **의존성 주입**: NestJS의 IoC 컨테이너를 활용
+- **계층 분리**: Controller, Service, Repository 패턴으로 관심사 분리
+
+### GraphQL 실시간 통신
+- **GraphQL Subscriptions**: WebSocket 기반 실시간 데이터 구독 시스템
+- **효율적인 쿼리**: 클라이언트가 필요한 데이터만 요청 가능
+- **타입 안전성**: TypeScript와 GraphQL의 강력한 타입 시스템
+
+### 데이터베이스 설계
+- **PostgreSQL**: RDBMS를 활용한 데이터 정합성 보장
+- **Drizzle ORM**: 타입 안전한 SQL 쿼리 빌더
+- **관계형 데이터 모델링**: 사용자, 스토리, 채팅 등 복합적인 관계 설계
+
+### 실시간 이벤트 처리
+- **PubSub 패턴**: Redis 기반 메시지 브로커링 (예정)
+- **이벤트 기반 아키텍처**: 알림, 채팅 등 비동기 이벤트 처리
+- **상태 동기화**: 실시간 사용자 상태 및 채팅방 상태 관리
+
+## 프로젝트 구조
+
+```
+src/
+├── auth/              # 인증 시스템
+├── users/             # 사용자 관리
+├── stories/           # 스토리 시스템
+├── comments/          # 댓글 시스템
+├── messages/          # 메시징 시스템
+├── rooms/             # 채팅방 관리
+├── notifications/     # 알림 시스템
+├── files/             # 파일 관리
+├── emoji/             # 이모지 시스템
+├── core/              # 공통 설정
+│   ├── config/        # 설정 파일들
+│   ├── guards/        # 인증 가드
+│   ├── decorators/    # 커스텀 데코레이터
+│   └── filters/       # 예외 필터
+├── data/              # 데이터베이스 관련
+│   └── schema/        # Drizzle ORM 스키마
+├── common/            # 공통 유틸리티
+├── utils/             # 헬퍼 함수들
+└── templates/         # 이메일 템플릿
 ```
 
-## Running the app
+## 주요 역할
 
-```bash
-# development
-$ npm run start
+### 백엔드 개발
 
-# watch mode
-$ npm run start:dev
+### **[GraphQL 도입을 통한 프론트엔드 개발 효율 증가: API 호출 평균 5회 → 1회로 줄인 과정](https://soohyeok8901.notion.site/GraphQL-API-5-1-26b79b04d0dc80949679e7f9675001ff?source=copy_link)**
 
-# production mode
-$ npm run start:prod
-```
+- SNS 피드 특성상 발생하는 다수의 REST API 호출과 Over-fetching 문제를 해결하기 위해 GraphQL을 도입했고 **클라이언트의 API 호출을 평균 5회에서 1회로 단축**시켜 프론트엔드 개발 효율과 애플리케이션 성능을 향상시켰습니다.
+- 또한, **GraphQL Subscription**을 활용하여 별도의 WebSocket 서버 없이 실시간 채팅 및 알림 기능을 구현하며 기술 스택을 단순화했습니다.
 
-## Test
+### **도메인 기반 아키텍처 및 데이터 모델링**
 
-```bash
-# unit tests
-$ npm run test
+- 유지보수성을 높이기 위해 도메인 기반의 레이어드 아키텍처를 설계했습니다.
+- 또한, SNS의 복잡한 관계(친구, 구독 등)를 안정적으로 관리하기 위해 RDBMS인 **PostgreSQL**을 채택하고, **Drizzle ORM**을 통해 타입세이프한 쿼리와 안전한 스키마 마이그레이션을 구현하여 데이터 무결성을 확보했습니다.
 
-# e2e tests
-$ npm run test:e2e
+### **인증 및 부가 기능 구현**
 
-# test coverage
-$ npm run test:cov
-```
+- **JWT 기반 인증 시스템**을 구현하고, `Nodemailer`를 활용하여 비밀번호 재설정 이메일 발송 기능을 개발했습니다. 또한, FCM을 연동하여 앱이 비활성화 상태일 때도 푸시 알림을 받을 수 있는 하이브리드 알림 시스템을 구축했습니다.
 
-## Support
+### **DevOps 및 인프라 구축**
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- **GitHub Actions**를 통해 코드 푸시 시 Lint, Build, Docker 이미지 생성, DB 마이그레이션, 서버 배포까지 전 과정을 자동화하는 **CI/CD 파이프라인**을 구축했습니다. 저비용 **AWS Lightsail** 인스턴스에 Docker 컨테이너를 배포하고, 정적 자산은 S3와 CloudFront를 통해 전송하여 응답 속도를 향상시켰습니다.
 
-## Stay in touch
+### **고려했던 점 & 배운 점**
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- **데이터베이스 선택**: 
+MVP임에도 불구하고, SNS의 복잡한 데이터 관계 때문에 NoSQL보다 **RDBMS가 더 효율적일 것이라 판단**하여 PostgreSQL을 채택했습니다. 이를 통해 비즈니스 요구사항에 맞는 최적의 데이터베이스를 선택하는 중요성을 배웠습니다.
 
-## License
+- **아키텍처 트레이드오프**: 
+NestJS의 **도메인 기반 폴더 구조**는 초기 개발 속도와 로직의 응집도를 높였으나, 프로젝트 후반부에는 구조가 너무 세분화되어 오히려 가독성이 저하되는 경험을 통해 아키텍처의 장단점을 비교, 분석할 수 있었습니다.
 
-Nest is [MIT licensed](LICENSE).
+- **실시간 통신 전략**: 
+별도의 WebSocket 서버 대신 **GraphQL Subscription**을 채택하여 실시간 기능을 구현했습니다. 이를 통해 단일 엔드포인트에서 모든 통신을 처리하며 기술 스택을 단순화하고 개발 효율을 높이는 전략적 이점을 경험했습니다.
+
+- **MVP와 확장성**: 
+검색 기능 구현 시, 초기 사용자 수를 고려하여 Elasticsearch 같은 무거운 검색 엔진 대신 **SQL의 `LIKE` 쿼리**를 사용하는 실용적인 선택을 했습니다. 동시에, 향후 트래픽 증가 시 전문 검색 엔진으로 전환할 수 있는 확장 가능성을 염두에 두는 경험을 했습니다.
+
+### **전체 요약 & 회고**
+
+`Wathing`은 NestJS와 PostgreSQL, Drizzle ORM 조합을 통해 타입세이프한 백엔드를 구현하며 실시간 SNS의 핵심 기능을 빠른 주기로 개발한 프로젝트였습니다. 
+
+가장 큰 성과는 **GraphQL을 도입하여 REST API의 비효율을 해결하고 프론트엔드 개발 효율을 향상**한 경험입니다. 
+
+Subscription을 활용해 실시간 데이터 전송까지 하나의 기술 스택으로 통합하면서, 복잡한 요구사항을 단순하고 일관된 방식으로 해결하는 능력을 길렀습니다. 
+
+또한, CI/CD 파이프라인과 AWS 인프라를 직접 구축하며 1인 백엔드 개발자로서 프로젝트를 책임지는 엔드투엔드 역량을 강화할 수 있었습니다.
